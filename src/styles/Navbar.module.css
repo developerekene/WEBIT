@@ -1,0 +1,80 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 100;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.05em;
+  color: var(--text-dark);
+}
+
+.navLinks {
+  display: flex;
+  gap: 2rem;
+}
+
+.link {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--text-dark);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loginBtn {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.loginBtn:hover {
+  color: var(--text-dark);
+}
+
+.ctaBtn {
+  background-color: var(--primary-indigo);
+  color: var(--bg-white);
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color var(--transition-fast);
+}
+
+.ctaBtn:hover {
+  background-color: var(--primary-indigo-hover);
+}
+
+@media (max-width: 768px) {
+  .navLinks {
+    display: none;
+  }
+  .loginBtn {
+    display: none;
+  }
+  .navbar {
+    padding: 1rem;
+  }
+}

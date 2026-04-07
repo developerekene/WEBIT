@@ -1,0 +1,68 @@
+/* LogoMarquee.module.css */
+
+.marqueeContainer {
+  width: 100%;
+  padding: 4rem 0;
+  background-color: var(--bg-main);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 3rem;
+}
+
+.marqueeWrapper {
+  display: flex;
+  width: 100%;
+  position: relative;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 15%,
+    black 85%,
+    transparent
+  );
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 6rem;
+  animation: scroll 30s linear infinite;
+  white-space: nowrap;
+}
+
+.logoText {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #cbd5e1; 
+  letter-spacing: 0.05em;
+  transition: color var(--transition-fast);
+}
+
+.logoText:hover {
+  color: var(--text-dark);
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 768px) {
+  .track {
+    gap: 4rem;
+  }
+  .logoText {
+    font-size: 1.125rem;
+  }
+}

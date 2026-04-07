@@ -1,0 +1,118 @@
+.container {
+  max-width: 1100px;
+  margin: 6rem auto;
+  padding: 0 2rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.header h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 280px;
+  gap: 1.5rem;
+}
+
+.card {
+  background: #f1f5f9;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.clickEdit {
+  grid-column: span 2;
+  background: #f8fafc;
+  border: 1px solid var(--border-light);
+}
+.exportJson {
+  background: var(--primary-violet);
+  color: white;
+}
+.responsive {
+  grid-row: span 2;
+  background: #e2e8f0;
+}
+.theming {
+  grid-column: span 2;
+  background: #ddd6fe;
+  color: var(--primary-violet);
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.cardDesc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.exportJson .cardDesc {
+  color: #ddd6fe;
+}
+
+/* Visual Placeholders */
+.visualArea {
+  flex: 1;
+  margin-top: 1.5rem;
+  position: relative;
+}
+
+.editMock {
+  width: 100%;
+  height: 80px;
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+}
+.badge {
+  background: var(--primary-indigo);
+  color: white;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+  .clickEdit,
+  .exportJson,
+  .responsive,
+  .theming {
+    grid-column: span 1;
+    grid-row: auto;
+  }
+}
