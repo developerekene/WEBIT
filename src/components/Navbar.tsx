@@ -1,17 +1,22 @@
+import { Link, useNavigate } from "react-router-dom";
 import styles from "../styles/Navbar.module.css";
 
 export default function Navbar() {
+  const navigate = useNavigate();
+
   return (
     <nav className={styles.navbar}>
-      <div className={styles.logo}>WEBIT</div>
+      <Link to="/" className={styles.logo}>
+        WEBIT
+      </Link>
 
       <div className={styles.navLinks}>
         <a href="#features" className={styles.link}>
           Features
         </a>
-        <a href="#templates" className={styles.link}>
+        <Link to="/templates" className={styles.link}>
           Templates
-        </a>
+        </Link>
         <a href="#showcase" className={styles.link}>
           Showcase
         </a>
@@ -22,7 +27,12 @@ export default function Navbar() {
 
       <div className={styles.actions}>
         <button className={styles.loginBtn}>Log in</button>
-        <button className={styles.ctaBtn}>Go to Editor</button>
+        <button 
+          className={styles.ctaBtn} 
+          onClick={() => navigate('/editor')}
+        >
+          Go to Editor
+        </button>
       </div>
     </nav>
   );
