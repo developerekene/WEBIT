@@ -17,9 +17,12 @@ export default function Navbar() {
         <Link to="/templates" className={styles.link}>
           Templates
         </Link>
-        <a href="#showcase" className={styles.link}>
+        <Link to="/showcase" className={styles.link}>
           Showcase
-        </a>
+        </Link>
+        {/* <a href="#showcase" className={styles.link}>
+          Showcase
+        </a> */}
         <a href="#pricing" className={styles.link}>
           Pricing
         </a>
