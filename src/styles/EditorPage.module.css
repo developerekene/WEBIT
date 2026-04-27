@@ -1,0 +1,296 @@
+.editorLayout {
+  display: grid;
+  grid-template-rows: 64px calc(100vh - 64px);
+  grid-template-columns: 280px 1fr 300px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "leftpanel canvas rightpanel";
+  height: 100vh;
+  width: 100vw;
+  background: var(--bg-main, #f8fafc);
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+.topBar {
+  grid-area: topbar;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+  z-index: 10;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.deviceControls {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.deviceBtn {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deviceBtn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btnSecondary {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.btnPrimary {
+  padding: 8px 16px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+}
+
+.leftPanel {
+  grid-area: leftpanel;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.elementGrid {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.elementItem {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: grab;
+  transition: all 0.2s;
+}
+
+.elementItem:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.rightPanel {
+  grid-area: rightpanel;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  overflow-y: auto;
+}
+
+.settingsGroup {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settingsGroup h4 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.canvasArea {
+  grid-area: canvas;
+  background: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.canvasFrame {
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  transition:
+    width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.4s ease;
+  min-height: 100%;
+}
+
+.desktopView {
+  width: 100%;
+  max-width: 1200px;
+}
+.tabletView {
+  width: 768px;
+}
+.mobileView {
+  width: 375px;
+  border-radius: 32px;
+  border: 12px solid #0f172a;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: #f1f5f9;
+  background-image: linear-gradient(
+    90deg,
+    #f1f5f9 0px,
+    #e2e8f0 40px,
+    #f1f5f9 80px
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear forwards;
+}
+
+.skelBrand {
+  height: 24px;
+  width: 80px;
+  border-radius: 4px;
+}
+.skelBtn {
+  height: 32px;
+  width: 80px;
+  border-radius: 6px;
+}
+.skelBtnWide {
+  width: 110px;
+}
+
+.skelPanelHeader {
+  height: 16px;
+  width: 50%;
+  border-radius: 4px;
+  margin: 1.2rem 1.5rem;
+}
+.skelIconBlock {
+  height: 90px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.skelSettingsGroup {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.skelTitle {
+  height: 14px;
+  width: 40%;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+.skelCircleWrapper {
+  display: flex;
+  gap: 10px;
+}
+.skelCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.skelInput {
+  height: 38px;
+  width: 100%;
+  border-radius: 6px;
+}
+.skelTextLine {
+  height: 12px;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.skelTextLineShort {
+  width: 70%;
+}
+
+.skeletonCanvas {
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: #ffffff;
+}
+.skelNav {
+  height: 60px;
+  width: 100%;
+  border-radius: 8px;
+}
+.skelHero {
+  height: 350px;
+  width: 100%;
+  border-radius: 8px;
+}
+.skelRow {
+  display: flex;
+  gap: 2rem;
+}
+.skelCol {
+  flex: 1;
+  height: 200px;
+  border-radius: 8px;
+}

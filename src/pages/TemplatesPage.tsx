@@ -1,93 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../styles/TemplatesPage.module.css";
-
-const TEMPLATE_DATA = [
-  {
-    id: "saas-1",
-    name: "SaaS Alpha",
-    category: "Landing",
-    tag: "Popular",
-    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-  {
-    id: "port-1",
-    name: "Dark Masonry",
-    category: "Portfolio",
-    tag: "Creative",
-    img: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-  {
-    id: "bio-1",
-    name: "Minimal Bio",
-    category: "Links",
-    tag: "Free",
-    img: "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-  {
-    id: "biz-1",
-    name: "Consultant Pro",
-    category: "Business",
-    tag: "New",
-    img: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-  {
-    id: "saas-2",
-    name: "Fintech Flow",
-    category: "Landing",
-    tag: "Premium",
-    img: "https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-  {
-    id: "port-2",
-    name: "Studio Gallery",
-    category: "Portfolio",
-    tag: "Clean",
-    img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800",
-    videos: {
-      desktop: "https://www.w3schools.com/html/mov_bbb.mp4",
-      tablet: "https://www.w3schools.com/html/mov_bbb.mp4",
-      mobile: "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-  },
-];
-
-const CATEGORIES = ["All", "Landing", "Portfolio", "Business", "Links"];
+import { TemplateRenderer } from "../engine/TemplateRenderer";
+import { TEMPLATE_DATA, CATEGORIES, type Template } from "../data/templates";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
 
 export default function TemplatesPage() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
-
-  // Modal State
-  const [previewTemplate, setPreviewTemplate] = useState<
-    (typeof TEMPLATE_DATA)[0] | null
-  >(null);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
 
   const filteredTemplates = TEMPLATE_DATA.filter(
@@ -96,10 +19,13 @@ export default function TemplatesPage() {
       tpl.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // Close modal helper
   const closeModal = () => {
     setPreviewTemplate(null);
-    setViewMode("desktop"); // reset to default
+    setViewMode("desktop");
+  };
+
+  const handleUseTemplate = (template: Template) => {
+    navigate("/editor", { state: { templateData: template.schema } });
   };
 
   return (
@@ -139,14 +65,16 @@ export default function TemplatesPage() {
               <div className={styles.imageWrapper}>
                 <img src={tpl.img} alt={tpl.name} />
                 <div className={styles.overlay}>
-                  {/* Trigger Modal */}
                   <button
                     className={styles.previewBtn}
                     onClick={() => setPreviewTemplate(tpl)}
                   >
                     Preview Template
                   </button>
-                  <button className={styles.selectBtn}>
+                  <button
+                    className={styles.selectBtn}
+                    onClick={() => handleUseTemplate(tpl)}
+                  >
                     Use this Template
                   </button>
                 </div>
@@ -166,10 +94,8 @@ export default function TemplatesPage() {
         </div>
       </div>
 
-      {/* --- PREVIEW MODAL --- */}
       {previewTemplate && (
         <div className={styles.modalOverlay} onClick={closeModal}>
-          {/* Stop propagation so clicking inside the modal doesn't close it */}
           <div
             className={styles.modalContent}
             onClick={(e) => e.stopPropagation()}
@@ -204,6 +130,7 @@ export default function TemplatesPage() {
                 <button
                   className={styles.selectBtn}
                   style={{ width: "auto", padding: "0.6rem 1.5rem" }}
+                  onClick={() => handleUseTemplate(previewTemplate)}
                 >
                   Use Template
                 </button>
@@ -221,15 +148,16 @@ export default function TemplatesPage() {
               <div
                 className={`${styles.videoWrapper} ${styles[`${viewMode}View`]}`}
               >
-                {/* The key prop forces the video element to remount and autoplay when switching views */}
-                <video
-                  key={`${previewTemplate.id}-${viewMode}`}
-                  src={previewTemplate.videos[viewMode]}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                />
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    overflowY: "auto",
+                    background: "#ffffff",
+                  }}
+                >
+                  <TemplateRenderer schema={previewTemplate.schema} />
+                </div>
               </div>
             </div>
           </div>
