@@ -20,93 +20,105 @@ const BASIC_ELEMENTS = [
 ];
 
 export default function EditorPage() {
+  const location = useLocation();
+  const initialData = location.state?.templateData as ElementSchema[] | null;
+
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
   const [isLoading, setIsLoading] = useState(true);
-
-  const location = useLocation();
-  const templateData = location.state?.templateData as ElementSchema[] | null;
+  const [schema, setSchema] = useState<ElementSchema[]>(initialData || []);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
+    const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
+  const handleDragStart = (e: React.DragEvent, type: string) => {
+    e.dataTransfer.setData("element-type", type);
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+
+    const elementType = e.dataTransfer.getData(
+      "element-type",
+    ) as ElementSchema["type"];
+    if (!elementType) return;
+
+    const newElement: ElementSchema = {
+      id: `${elementType}-${Date.now()}`,
+      type: elementType,
+      content: `New ${elementType}`,
+      styles: {
+        padding:
+          elementType === "section" || elementType === "container"
+            ? "2rem"
+            : "0.5rem",
+        margin: "0.5rem 0",
+        minHeight: elementType === "section" ? "100px" : "auto",
+        background: elementType === "section" ? "#f8fafc" : "transparent",
+      },
+    };
+
+    setSchema((prev) => [...prev, newElement]);
+    setSelectedIds([newElement.id]);
+  };
+
+  const handleSelectElement = (id: string, e: React.MouseEvent) => {
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      setSelectedIds((prev) =>
+        prev.includes(id)
+          ? prev.filter((selectedId) => selectedId !== id)
+          : [...prev, id],
+      );
+    } else {
+      setSelectedIds([id]);
+    }
+  };
+
+  const handleDeselect = () => {
+    setSelectedIds([]);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+
+    const recursivelyDelete = (
+      elements: ElementSchema[],
+      targetIds: string[],
+    ): ElementSchema[] => {
+      return elements
+        .filter((el) => !targetIds.includes(el.id))
+        .map((el) => ({
+          ...el,
+          children: el.children
+            ? recursivelyDelete(el.children, targetIds)
+            : undefined,
+        }));
+    };
+
+    setSchema((prev) => recursivelyDelete(prev, selectedIds));
+    setSelectedIds([]);
+  };
+
   if (isLoading) {
-    return (
-      <div className={styles.editorLayout}>
-        <header className={styles.topBar}>
-          <div className={`${styles.skeleton} ${styles.skelBrand}`}></div>
-          <div className={styles.deviceControls}>
-            <div className={`${styles.skeleton} ${styles.skelBtn}`}></div>
-            <div className={`${styles.skeleton} ${styles.skelBtn}`}></div>
-            <div className={`${styles.skeleton} ${styles.skelBtn}`}></div>
-          </div>
-          <div className={styles.actions}>
-            <div
-              className={`${styles.skeleton} ${styles.skelBtn} ${styles.skelBtnWide}`}
-            ></div>
-            <div className={`${styles.skeleton} ${styles.skelBtn}`}></div>
-          </div>
-        </header>
-
-        <aside className={styles.leftPanel}>
-          <div className={`${styles.skeleton} ${styles.skelPanelHeader}`}></div>
-          <div className={styles.elementGrid}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div
-                key={i}
-                className={`${styles.skeleton} ${styles.skelIconBlock}`}
-              ></div>
-            ))}
-          </div>
-        </aside>
-
-        <main className={styles.canvasArea}>
-          <div className={`${styles.canvasFrame} ${styles[`${viewMode}View`]}`}>
-            <div className={styles.skeletonCanvas}>
-              <div className={`${styles.skeleton} ${styles.skelNav}`}></div>
-              <div className={`${styles.skeleton} ${styles.skelHero}`}></div>
-              <div className={styles.skelRow}>
-                <div className={`${styles.skeleton} ${styles.skelCol}`}></div>
-                <div className={`${styles.skeleton} ${styles.skelCol}`}></div>
-                <div className={`${styles.skeleton} ${styles.skelCol}`}></div>
-              </div>
-            </div>
-          </div>
-        </main>
-
-        <aside className={styles.rightPanel}>
-          <div className={`${styles.skeleton} ${styles.skelPanelHeader}`}></div>
-
-          <div className={styles.skelSettingsGroup}>
-            <div className={`${styles.skeleton} ${styles.skelTitle}`}></div>
-            <div className={styles.skelCircleWrapper}>
-              <div className={`${styles.skeleton} ${styles.skelCircle}`}></div>
-              <div className={`${styles.skeleton} ${styles.skelCircle}`}></div>
-              <div className={`${styles.skeleton} ${styles.skelCircle}`}></div>
-            </div>
-          </div>
-
-          <div className={styles.skelSettingsGroup}>
-            <div className={`${styles.skeleton} ${styles.skelTitle}`}></div>
-            <div className={`${styles.skeleton} ${styles.skelInput}`}></div>
-          </div>
-
-          <div className={styles.skelSettingsGroup}>
-            <div className={`${styles.skeleton} ${styles.skelTextLine}`}></div>
-            <div
-              className={`${styles.skeleton} ${styles.skelTextLine} ${styles.skelTextLineShort}`}
-            ></div>
-          </div>
-        </aside>
-      </div>
-    );
+    return <div className={styles.editorLayout}>Loading...</div>;
   }
 
   return (
-    <div className={styles.editorLayout}>
+    <div className={styles.editorLayout} onClick={handleDeselect}>
       <header className={styles.topBar}>
         <Link to="/" className={styles.brand}>
           WEBIT
@@ -139,11 +151,16 @@ export default function EditorPage() {
         </div>
       </header>
 
-      <aside className={styles.leftPanel}>
+      <aside className={styles.leftPanel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.panelHeader}>Add Elements</div>
         <div className={styles.elementGrid}>
           {BASIC_ELEMENTS.map((el) => (
-            <div key={el.id} className={styles.elementItem} draggable>
+            <div
+              key={el.id}
+              className={styles.elementItem}
+              draggable
+              onDragStart={(e) => handleDragStart(e, el.id)}
+            >
               <span style={{ fontSize: "1.5rem" }}>{el.icon}</span>
               {el.label}
             </div>
@@ -152,17 +169,31 @@ export default function EditorPage() {
       </aside>
 
       <main className={styles.canvasArea}>
-        <div className={`${styles.canvasFrame} ${styles[`${viewMode}View`]}`}>
-          {templateData ? (
+        <div
+          className={`${styles.canvasFrame} ${styles[`${viewMode}View`]}`}
+          style={{
+            border: isDraggingOver ? "2px dashed #4f46e5" : "none",
+            transition: "border 0.2s ease",
+          }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {schema.length > 0 ? (
             <div
               style={{
                 width: "100%",
                 height: "100%",
                 overflowY: "auto",
                 background: "#ffffff",
+                paddingBottom: "10rem",
               }}
             >
-              <TemplateRenderer schema={templateData} />
+              <TemplateRenderer
+                schema={schema}
+                selectedIds={selectedIds}
+                onSelect={handleSelectElement}
+              />
             </div>
           ) : (
             <div
@@ -175,71 +206,65 @@ export default function EditorPage() {
         </div>
       </main>
 
-      <aside className={styles.rightPanel}>
+      <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.panelHeader}>Inspector</div>
 
-        <div className={styles.settingsGroup}>
-          <h4>Global Theme</h4>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                background: "#4f46e5",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-            ></div>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                background: "#0f172a",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-            ></div>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                background: "#ec4899",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-            ></div>
-          </div>
-        </div>
+        {selectedIds.length > 0 ? (
+          <>
+            <div className={styles.settingsGroup}>
+              <h4>
+                {selectedIds.length === 1
+                  ? `Editing: ${selectedIds[0].split("-")[0]}`
+                  : `Multiple Elements Selected (${selectedIds.length})`}
+              </h4>
+              <button
+                onClick={handleDeleteSelected}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  background: "#fee2e2",
+                  color: "#ef4444",
+                  border: "1px solid #f87171",
+                  borderRadius: "6px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  marginTop: "1rem",
+                }}
+              >
+                {selectedIds.length === 1
+                  ? "Delete Element"
+                  : "Delete Selected Elements"}
+              </button>
+            </div>
 
-        <div className={styles.settingsGroup}>
-          <h4>Typography</h4>
-          <select
-            style={{
-              width: "100%",
-              padding: "8px",
-              borderRadius: "6px",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <option>Inter</option>
-            <option>Roboto</option>
-            <option>Playfair Display</option>
-          </select>
-        </div>
-
-        <div className={styles.settingsGroup}>
-          <div
-            style={{
-              padding: "2rem 1rem",
-              textAlign: "center",
-              color: "#94a3b8",
-              fontSize: "0.85rem",
-            }}
-          >
-            Select an element on the canvas to edit its specific properties
-            here.
+            <div className={styles.settingsGroup}>
+              <div
+                style={{
+                  padding: "2rem 1rem",
+                  textAlign: "center",
+                  color: "#94a3b8",
+                  fontSize: "0.85rem",
+                }}
+              >
+                (Content and style editing coming next)
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className={styles.settingsGroup}>
+            <div
+              style={{
+                padding: "2rem 1rem",
+                textAlign: "center",
+                color: "#94a3b8",
+                fontSize: "0.85rem",
+              }}
+            >
+              Select one or more elements on the canvas (Shift+Click for
+              multi-select).
+            </div>
           </div>
-        </div>
+        )}
       </aside>
     </div>
   );

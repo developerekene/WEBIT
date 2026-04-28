@@ -1,4 +1,4 @@
-import AnimatedDragDrop from "../components/AnimatedDragDrop";
+// import AnimatedDragDrop from "../components/AnimatedDragDrop";
 import BentoGrid from "../components/BentoGrid";
 import Hero from "../components/Hero";
 import LogoMarquee from "../components/LogoMarquee";
@@ -10,7 +10,7 @@ function LandingPage() {
     <div>
       <main>
         <Hero />
-        <AnimatedDragDrop />
+        {/* <AnimatedDragDrop /> */}
         <LogoMarquee />
         <BentoGrid />
         <Workflow />
