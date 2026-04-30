@@ -173,124 +173,62 @@
 }
 
 .desktopView {
-  width: 100%;
-  max-width: 1200px;
+  width: 1200px;
+  flex-shrink: 0;
 }
 .tabletView {
   width: 768px;
+  flex-shrink: 0;
 }
 .mobileView {
   width: 375px;
   border-radius: 32px;
   border: 12px solid #0f172a;
+  flex-shrink: 0;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-.skeleton {
-  background: #f1f5f9;
-  background-image: linear-gradient(
-    90deg,
-    #f1f5f9 0px,
-    #e2e8f0 40px,
-    #f1f5f9 80px
-  );
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite linear forwards;
-}
-
-.skelBrand {
-  height: 24px;
-  width: 80px;
-  border-radius: 4px;
-}
-.skelBtn {
-  height: 32px;
-  width: 80px;
-  border-radius: 6px;
-}
-.skelBtnWide {
-  width: 110px;
-}
-
-.skelPanelHeader {
-  height: 16px;
-  width: 50%;
-  border-radius: 4px;
-  margin: 1.2rem 1.5rem;
-}
-.skelIconBlock {
-  height: 90px;
-  width: 100%;
-  border-radius: 8px;
-}
-
-.skelSettingsGroup {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-.skelTitle {
-  height: 14px;
-  width: 40%;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-.skelCircleWrapper {
-  display: flex;
-  gap: 10px;
-}
-.skelCircle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-.skelInput {
-  height: 38px;
-  width: 100%;
-  border-radius: 6px;
-}
-.skelTextLine {
-  height: 12px;
-  width: 100%;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-}
-.skelTextLineShort {
-  width: 70%;
-}
-
-.skeletonCanvas {
-  width: 100%;
-  height: 100%;
-  padding: 2rem;
+.framerLoader {
+  background-color: #fff;
+  height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  background: #ffffff;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: sans-serif;
 }
-.skelNav {
-  height: 60px;
-  width: 100%;
-  border-radius: 8px;
+
+.framerLogoIcon {
+  width: 24px;
+  height: 24px;
+  background-color: white;
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 50% 50%, 50% 100%, 0 100%);
+  margin-bottom: 24px;
 }
-.skelHero {
-  height: 350px;
-  width: 100%;
-  border-radius: 8px;
+
+.framerTrack {
+  width: 100px;
+  height: 1px;
+  background-color: #e2e8f0;
+  position: relative;
+  overflow: hidden;
 }
-.skelRow {
-  display: flex;
-  gap: 2rem;
+
+.framerProgress {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  background-color: #4f46e5;
+  animation: framerSweep 1.2s ease-in-out infinite;
 }
-.skelCol {
-  flex: 1;
-  height: 200px;
-  border-radius: 8px;
+
+@keyframes framerSweep {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }

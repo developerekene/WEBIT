@@ -22,12 +22,16 @@ interface TemplateRendererProps {
   schema: ElementSchema[];
   selectedIds?: string[];
   onSelect?: (id: string, e: React.MouseEvent) => void;
+  onDragStart?: (id: string, e: React.DragEvent) => void;
+  onDrop?: (targetId: string, e: React.DragEvent) => void;
 }
 
 export const TemplateRenderer = ({
   schema,
   selectedIds = [],
   onSelect,
+  onDragStart,
+  onDrop,
 }: TemplateRendererProps) => {
   const renderElement = (el: ElementSchema) => {
     const isSelected = selectedIds.includes(el.id);
@@ -37,10 +41,6 @@ export const TemplateRenderer = ({
       boxShadow: isSelected
         ? "inset 0 0 0 2px #4f46e5, 0 4px 12px rgba(79, 70, 229, 0.15)"
         : "none",
-      backgroundColor: isSelected
-        ? "rgba(79, 70, 229, 0.03)"
-        : (el.styles?.backgroundColor as string) || "transparent",
-      borderRadius: el.styles?.borderRadius || (isSelected ? "4px" : "0"),
       cursor: onSelect ? "pointer" : "default",
       transition: "all 0.15s ease-in-out",
       position: "relative",
@@ -53,52 +53,60 @@ export const TemplateRenderer = ({
       }
     };
 
+    const handleDragStart = (e: React.DragEvent) => {
+      if (onDragStart) {
+        e.stopPropagation();
+        onDragStart(el.id, e);
+      }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+      if (onDrop) {
+        e.stopPropagation();
+        onDrop(el.id, e);
+      }
+    };
+
+    const commonProps = {
+      key: el.id,
+      onClick: handleClick,
+      draggable: !!onDragStart,
+      onDragStart: handleDragStart,
+      onDragOver: handleDragOver,
+      onDrop: handleDrop,
+      style: mergedStyles,
+    };
+
     switch (el.type) {
       case "section":
         return (
-          <section key={el.id} onClick={handleClick} style={mergedStyles}>
-            {el.children?.map(renderElement)}
-          </section>
+          <section {...commonProps}>{el.children?.map(renderElement)}</section>
         );
       case "container":
-        return (
-          <div key={el.id} onClick={handleClick} style={mergedStyles}>
-            {el.children?.map(renderElement)}
-          </div>
-        );
+        return <div {...commonProps}>{el.children?.map(renderElement)}</div>;
       case "heading":
-        return (
-          <h1 key={el.id} onClick={handleClick} style={mergedStyles}>
-            {el.content}
-          </h1>
-        );
+        return <h1 {...commonProps}>{el.content}</h1>;
       case "text":
-        return (
-          <p key={el.id} onClick={handleClick} style={mergedStyles}>
-            {el.content}
-          </p>
-        );
+        return <p {...commonProps}>{el.content}</p>;
       case "button":
-        return (
-          <button key={el.id} onClick={handleClick} style={mergedStyles}>
-            {el.content}
-          </button>
-        );
+        return <button {...commonProps}>{el.content}</button>;
       case "image":
         return (
           <img
-            key={el.id}
-            onClick={handleClick}
+            {...commonProps}
             src={el.src || "https://placehold.co/600x400"}
-            style={mergedStyles}
             alt=""
           />
         );
       case "divider":
         return (
           <hr
-            key={el.id}
-            onClick={handleClick}
+            {...commonProps}
             style={{
               ...mergedStyles,
               width: "100%",
@@ -107,11 +115,7 @@ export const TemplateRenderer = ({
           />
         );
       default:
-        return (
-          <div key={el.id} onClick={handleClick} style={mergedStyles}>
-            Unsupported Element
-          </div>
-        );
+        return <div {...commonProps}>Unsupported Element</div>;
     }
   };
 

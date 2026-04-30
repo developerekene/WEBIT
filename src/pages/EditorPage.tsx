@@ -1,62 +1,135 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
-import {
-  TemplateRenderer,
-  type ElementSchema,
-} from "../engine/TemplateRenderer";
+import type { ElementSchema } from "../engine/TemplateRenderer";
+
+import EditorTopBar from "../components/editor/EditorTopBar";
+import EditorSidebar from "../components/editor/EditorSidebar";
+import EditorInspector from "../components/editor/EditorInspector";
+import EditorCanvas, {
+  type PageSchema,
+} from "../components/editor/EditorCanvas";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
-
-const BASIC_ELEMENTS = [
-  { id: "section", label: "Section", icon: "🔲" },
-  { id: "grid", label: "Grid", icon: "⊞" },
-  { id: "heading", label: "Heading", icon: "T" },
-  { id: "text", label: "Text", icon: "📄" },
-  { id: "image", label: "Image", icon: "🖼️" },
-  { id: "button", label: "Button", icon: "🔘" },
-  { id: "video", label: "Video", icon: "▶️" },
-  { id: "divider", label: "Divider", icon: "➖" },
-];
 
 export default function EditorPage() {
   const location = useLocation();
   const initialData = location.state?.templateData as ElementSchema[] | null;
 
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
-  const [isLoading, setIsLoading] = useState(true);
-  const [schema, setSchema] = useState<ElementSchema[]>(initialData || []);
+  const [pages, setPages] = useState<PageSchema[]>([
+    { id: "page-1", name: "Home", elements: initialData || [] },
+  ]);
+  const [activePageId, setActivePageId] = useState<string>("page-1");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
+    const timer = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleDragStart = (e: React.DragEvent, type: string) => {
-    e.dataTransfer.setData("element-type", type);
-    e.dataTransfer.effectAllowed = "copy";
+  const findElement = (
+    pagesList: PageSchema[],
+    id: string,
+  ): ElementSchema | null => {
+    const searchRecursive = (
+      elements: ElementSchema[],
+    ): ElementSchema | null => {
+      for (const el of elements) {
+        if (el.id === id) return el;
+        if (el.children) {
+          const found = searchRecursive(el.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    for (const page of pagesList) {
+      const found = searchRecursive(page.elements);
+      if (found) return found;
+    }
+    return null;
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(true);
+  const selectedElement =
+    selectedIds.length === 1 ? findElement(pages, selectedIds[0]) : null;
+
+  const updateElementStyle = (id: string, property: string, value: string) => {
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === id)
+            return { ...el, styles: { ...el.styles, [property]: value } };
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
   };
 
-  const handleDragLeave = () => {
-    setIsDraggingOver(false);
+  const removeElementRecursive = (
+    elements: ElementSchema[],
+    targetId: string,
+  ): ElementSchema[] => {
+    return elements
+      .filter((el) => el.id !== targetId)
+      .map((el) => ({
+        ...el,
+        children: el.children
+          ? removeElementRecursive(el.children, targetId)
+          : undefined,
+      }));
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDraggingOver(false);
+  const insertElementRecursive = (
+    elements: ElementSchema[],
+    targetId: string,
+    elToAdd: ElementSchema,
+  ): ElementSchema[] => {
+    const targetIdx = elements.findIndex((el) => el.id === targetId);
+    if (targetIdx !== -1) {
+      const targetEl = elements[targetIdx];
+      if (targetEl.type === "section" || targetEl.type === "container") {
+        return elements.map((el, i) =>
+          i === targetIdx
+            ? { ...el, children: [...(el.children || []), elToAdd] }
+            : el,
+        );
+      }
+      const newEls = [...elements];
+      newEls.splice(targetIdx, 0, elToAdd);
+      return newEls;
+    }
+    return elements.map((el) => ({
+      ...el,
+      children: el.children
+        ? insertElementRecursive(el.children, targetId, elToAdd)
+        : undefined,
+    }));
+  };
 
-    const elementType = e.dataTransfer.getData(
-      "element-type",
-    ) as ElementSchema["type"];
-    if (!elementType) return;
+  const handleAddPage = () => {
+    const newPageId = `page-${Date.now()}`;
+    setPages((prev) => [
+      ...prev,
+      { id: newPageId, name: "New Page", elements: [] },
+    ]);
+    setActivePageId(newPageId);
+  };
 
+  const handleUpdatePageName = (id: string, name: string) => {
+    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+  };
+
+  const handleAddSidebarElement = (elementType: ElementSchema["type"]) => {
     const newElement: ElementSchema = {
       id: `${elementType}-${Date.now()}`,
       type: elementType,
@@ -69,203 +142,148 @@ export default function EditorPage() {
         margin: "0.5rem 0",
         minHeight: elementType === "section" ? "100px" : "auto",
         background: elementType === "section" ? "#f8fafc" : "transparent",
+        display:
+          elementType === "section" || elementType === "container"
+            ? "flex"
+            : "block",
+        flexDirection: "column",
+        gap: "1rem",
       },
+      children:
+        elementType === "section" || elementType === "container"
+          ? []
+          : undefined,
     };
 
-    setSchema((prev) => [...prev, newElement]);
+    setPages((prev) =>
+      prev.map((p) =>
+        p.id === activePageId
+          ? { ...p, elements: [...p.elements, newElement] }
+          : p,
+      ),
+    );
     setSelectedIds([newElement.id]);
+
+    setTimeout(() => {
+      canvasRef.current?.scrollTo({
+        top: canvasRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 50);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    setPages((prev) => {
+      const delRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements
+          .filter((el) => !selectedIds.includes(el.id))
+          .map((el) => ({
+            ...el,
+            children: el.children ? delRec(el.children) : undefined,
+          }));
+      };
+      return prev.map((page) => ({ ...page, elements: delRec(page.elements) }));
+    });
+    setSelectedIds([]);
   };
 
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
       setSelectedIds((prev) =>
-        prev.includes(id)
-          ? prev.filter((selectedId) => selectedId !== id)
-          : [...prev, id],
+        prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
       );
     } else {
       setSelectedIds([id]);
     }
   };
 
-  const handleDeselect = () => {
-    setSelectedIds([]);
+  const handleDragStartCanvas = (id: string, e: React.DragEvent) => {
+    e.dataTransfer.setData("existing-id", id);
+    e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDeleteSelected = () => {
-    if (selectedIds.length === 0) return;
+  const handleDropCanvas = (pageId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(null);
+    const existingId = e.dataTransfer.getData("existing-id");
+    if (!existingId) return;
+    const elToMove = findElement(pages, existingId);
+    if (!elToMove) return;
 
-    const recursivelyDelete = (
-      elements: ElementSchema[],
-      targetIds: string[],
-    ): ElementSchema[] => {
-      return elements
-        .filter((el) => !targetIds.includes(el.id))
-        .map((el) => ({
-          ...el,
-          children: el.children
-            ? recursivelyDelete(el.children, targetIds)
-            : undefined,
-        }));
-    };
+    setPages((prev) => {
+      const cleanedPages = prev.map((p) => ({
+        ...p,
+        elements: removeElementRecursive(p.elements, existingId),
+      }));
+      return cleanedPages.map((p) =>
+        p.id === pageId ? { ...p, elements: [...p.elements, elToMove] } : p,
+      );
+    });
+  };
 
-    setSchema((prev) => recursivelyDelete(prev, selectedIds));
-    setSelectedIds([]);
+  const handleDropOnElement = (targetId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(null);
+    const existingId = e.dataTransfer.getData("existing-id");
+    if (!existingId) return;
+    const elementToAdd = findElement(pages, existingId);
+    if (!elementToAdd) return;
+
+    setPages((prev) => {
+      const cleanedPages = prev.map((p) => ({
+        ...p,
+        elements: removeElementRecursive(p.elements, existingId),
+      }));
+      return cleanedPages.map((p) => ({
+        ...p,
+        elements: insertElementRecursive(p.elements, targetId, elementToAdd),
+      }));
+    });
   };
 
   if (isLoading) {
-    return <div className={styles.editorLayout}>Loading...</div>;
+    return (
+      <div className={styles.framerLoader}>
+        <div className={styles.framerLogoIcon}></div>
+        <div className={styles.framerTrack}>
+          <div className={styles.framerProgress}></div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.editorLayout} onClick={handleDeselect}>
-      <header className={styles.topBar}>
-        <Link to="/" className={styles.brand}>
-          WEBIT
-        </Link>
-
-        <div className={styles.deviceControls}>
-          <button
-            className={`${styles.deviceBtn} ${viewMode === "desktop" ? styles.active : ""}`}
-            onClick={() => setViewMode("desktop")}
-          >
-            Desktop
-          </button>
-          <button
-            className={`${styles.deviceBtn} ${viewMode === "tablet" ? styles.active : ""}`}
-            onClick={() => setViewMode("tablet")}
-          >
-            Tablet
-          </button>
-          <button
-            className={`${styles.deviceBtn} ${viewMode === "mobile" ? styles.active : ""}`}
-            onClick={() => setViewMode("mobile")}
-          >
-            Mobile
-          </button>
-        </div>
-
-        <div className={styles.actions}>
-          <button className={styles.btnSecondary}>{"< / >"} Export JSON</button>
-          <button className={styles.btnPrimary}>Publish</button>
-        </div>
-      </header>
-
-      <aside className={styles.leftPanel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.panelHeader}>Add Elements</div>
-        <div className={styles.elementGrid}>
-          {BASIC_ELEMENTS.map((el) => (
-            <div
-              key={el.id}
-              className={styles.elementItem}
-              draggable
-              onDragStart={(e) => handleDragStart(e, el.id)}
-            >
-              <span style={{ fontSize: "1.5rem" }}>{el.icon}</span>
-              {el.label}
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <main className={styles.canvasArea}>
-        <div
-          className={`${styles.canvasFrame} ${styles[`${viewMode}View`]}`}
-          style={{
-            border: isDraggingOver ? "2px dashed #4f46e5" : "none",
-            transition: "border 0.2s ease",
-          }}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {schema.length > 0 ? (
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                overflowY: "auto",
-                background: "#ffffff",
-                paddingBottom: "10rem",
-              }}
-            >
-              <TemplateRenderer
-                schema={schema}
-                selectedIds={selectedIds}
-                onSelect={handleSelectElement}
-              />
-            </div>
-          ) : (
-            <div
-              style={{ padding: "4rem", textAlign: "center", color: "#94a3b8" }}
-            >
-              <h2>Drag elements here</h2>
-              <p>Your site schema will render in this frame.</p>
-            </div>
-          )}
-        </div>
-      </main>
-
-      <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.panelHeader}>Inspector</div>
-
-        {selectedIds.length > 0 ? (
-          <>
-            <div className={styles.settingsGroup}>
-              <h4>
-                {selectedIds.length === 1
-                  ? `Editing: ${selectedIds[0].split("-")[0]}`
-                  : `Multiple Elements Selected (${selectedIds.length})`}
-              </h4>
-              <button
-                onClick={handleDeleteSelected}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  background: "#fee2e2",
-                  color: "#ef4444",
-                  border: "1px solid #f87171",
-                  borderRadius: "6px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  marginTop: "1rem",
-                }}
-              >
-                {selectedIds.length === 1
-                  ? "Delete Element"
-                  : "Delete Selected Elements"}
-              </button>
-            </div>
-
-            <div className={styles.settingsGroup}>
-              <div
-                style={{
-                  padding: "2rem 1rem",
-                  textAlign: "center",
-                  color: "#94a3b8",
-                  fontSize: "0.85rem",
-                }}
-              >
-                (Content and style editing coming next)
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className={styles.settingsGroup}>
-            <div
-              style={{
-                padding: "2rem 1rem",
-                textAlign: "center",
-                color: "#94a3b8",
-                fontSize: "0.85rem",
-              }}
-            >
-              Select one or more elements on the canvas (Shift+Click for
-              multi-select).
-            </div>
-          </div>
-        )}
-      </aside>
+    <div className={styles.editorLayout} onClick={() => setSelectedIds([])}>
+      <EditorTopBar viewMode={viewMode} setViewMode={setViewMode} />
+      <EditorSidebar onAddElement={handleAddSidebarElement} />
+      <EditorCanvas
+        pages={pages}
+        activePageId={activePageId}
+        viewMode={viewMode}
+        isDraggingOver={isDraggingOver}
+        canvasRef={canvasRef}
+        selectedIds={selectedIds}
+        onSetActivePage={setActivePageId}
+        onUpdatePageName={handleUpdatePageName}
+        onAddPage={handleAddPage}
+        onDragOver={(pageId, e) => {
+          e.preventDefault();
+          setIsDraggingOver(pageId);
+        }}
+        onDragLeave={() => setIsDraggingOver(null)}
+        onDropCanvas={handleDropCanvas}
+        onSelectElement={handleSelectElement}
+        onDragStartCanvas={handleDragStartCanvas}
+        onDropOnElement={handleDropOnElement}
+      />
+      <EditorInspector
+        selectedElement={selectedElement}
+        selectedIdsCount={selectedIds.length}
+        onUpdateStyle={updateElementStyle}
+        onDeleteSelected={handleDeleteSelected}
+      />
     </div>
   );
 }
