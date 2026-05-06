@@ -11,15 +11,18 @@ export default function Navbar() {
       </Link>
 
       <div className={styles.navLinks}>
-        <a href="#features" className={styles.link}>
+        <Link to="/features" className={styles.link}>
           Features
-        </a>
+        </Link>
         <Link to="/templates" className={styles.link}>
           Templates
         </Link>
-        <a href="#showcase" className={styles.link}>
+        <Link to="/showcase" className={styles.link}>
           Showcase
-        </a>
+        </Link>
+        {/* <a href="#showcase" className={styles.link}>
+          Showcase
+        </a> */}
         <a href="#pricing" className={styles.link}>
           Pricing
         </a>
@@ -27,10 +30,7 @@ export default function Navbar() {
 
       <div className={styles.actions}>
         <button className={styles.loginBtn}>Log in</button>
-        <button 
-          className={styles.ctaBtn} 
-          onClick={() => navigate('/editor')}
-        >
+        <button className={styles.ctaBtn} onClick={() => navigate("/editor")}>
           Go to Editor
         </button>
       </div>
