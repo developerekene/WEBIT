@@ -294,6 +294,270 @@ const NAVBAR_TEMPLATES = [
       ],
     }),
   },
+  {
+    id: "right-aligned",
+    name: "Right Aligned",
+    description: "Logo on the left, all navigation grouped on the right",
+    getSchema: (baseId: number): ElementSchema => ({
+      id: `container-nav-${baseId}`,
+      type: "container",
+      styles: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "1rem 2rem",
+        background: "#ffffff",
+        borderBottom: "1px solid #e2e8f0",
+        width: "100%",
+        margin: "0",
+      },
+      children: [
+        {
+          id: `heading-logo-${baseId}`,
+          type: "heading",
+          content: "Brand",
+          styles: {
+            margin: "0",
+            fontSize: "1.5rem",
+            fontWeight: "800",
+            color: "#0f172a",
+          },
+        },
+        {
+          id: `container-group-${baseId}`,
+          type: "container",
+          styles: {
+            display: "flex",
+            flexDirection: "row",
+            gap: "2rem",
+            alignItems: "center",
+            padding: "0",
+            margin: "0",
+            background: "transparent",
+          },
+          children: [
+            {
+              id: `text-l1-${baseId}`,
+              type: "text",
+              content: "Features",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#64748b",
+              },
+            },
+            {
+              id: `text-l2-${baseId}`,
+              type: "text",
+              content: "Pricing",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#64748b",
+              },
+            },
+            {
+              id: `button-cta-${baseId}`,
+              type: "button",
+              content: "Sign Up",
+              styles: {
+                padding: "10px 20px",
+                background: "#0f172a",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: "600",
+                cursor: "pointer",
+                margin: "0",
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  },
+  {
+    id: "floating-card",
+    name: "Floating Card",
+    description: "Rounded, elevated navbar that sits inside the page",
+    getSchema: (baseId: number): ElementSchema => ({
+      id: `container-nav-${baseId}`,
+      type: "container",
+      styles: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "1rem 2rem",
+        background: "#ffffff",
+        borderRadius: "16px",
+        boxShadow:
+          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        width: "90%",
+        margin: "1.5rem auto",
+      },
+      children: [
+        {
+          id: `heading-logo-${baseId}`,
+          type: "heading",
+          content: "App",
+          styles: {
+            margin: "0",
+            fontSize: "1.5rem",
+            fontWeight: "900",
+            color: "#4f46e5",
+          },
+        },
+        {
+          id: `container-links-${baseId}`,
+          type: "container",
+          styles: {
+            display: "flex",
+            flexDirection: "row",
+            gap: "2.5rem",
+            alignItems: "center",
+            padding: "0",
+            margin: "0",
+            background: "transparent",
+          },
+          children: [
+            {
+              id: `text-l1-${baseId}`,
+              type: "text",
+              content: "Product",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#0f172a",
+              },
+            },
+            {
+              id: `text-l2-${baseId}`,
+              type: "text",
+              content: "Company",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#0f172a",
+              },
+            },
+          ],
+        },
+        {
+          id: `button-cta-${baseId}`,
+          type: "button",
+          content: "Download",
+          styles: {
+            padding: "10px 20px",
+            background: "#eef2ff",
+            color: "#4f46e5",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "700",
+            cursor: "pointer",
+            margin: "0",
+          },
+        },
+      ],
+    }),
+  },
+  {
+    id: "ecommerce",
+    name: "E-Commerce",
+    description: "Includes a search bar placeholder and utility links",
+    getSchema: (baseId: number): ElementSchema => ({
+      id: `container-nav-${baseId}`,
+      type: "container",
+      styles: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "1rem 2rem",
+        background: "#ffffff",
+        borderBottom: "1px solid #e2e8f0",
+        width: "100%",
+        margin: "0",
+      },
+      children: [
+        {
+          id: `heading-logo-${baseId}`,
+          type: "heading",
+          content: "Storefront",
+          styles: {
+            margin: "0",
+            fontSize: "1.5rem",
+            fontWeight: "900",
+            color: "#0f172a",
+          },
+        },
+        {
+          id: `container-search-${baseId}`,
+          type: "container",
+          styles: {
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            padding: "0.6rem 1.2rem",
+            margin: "0",
+            background: "#f1f5f9",
+            borderRadius: "24px",
+            flex: "0 1 400px",
+          },
+          children: [
+            {
+              id: `text-search-${baseId}`,
+              type: "text",
+              content: "🔍 Search products...",
+              styles: { margin: "0", color: "#94a3b8", fontSize: "0.9rem" },
+            },
+          ],
+        },
+        {
+          id: `container-utils-${baseId}`,
+          type: "container",
+          styles: {
+            display: "flex",
+            flexDirection: "row",
+            gap: "1.5rem",
+            alignItems: "center",
+            padding: "0",
+            margin: "0",
+            background: "transparent",
+          },
+          children: [
+            {
+              id: `text-u1-${baseId}`,
+              type: "text",
+              content: "👤 Account",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#0f172a",
+              },
+            },
+            {
+              id: `text-u2-${baseId}`,
+              type: "text",
+              content: "🛒 Cart (0)",
+              styles: {
+                margin: "0",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#0f172a",
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  },
 ];
 
 export default function EditorPage() {
@@ -652,7 +916,7 @@ export default function EditorPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr",
+                gridTemplateColumns: "1fr 1fr",
                 gap: "1rem",
               }}
             >
