@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
 import type { ElementSchema } from "../engine/TemplateRenderer";
+import { NAVBAR_TEMPLATES } from "../templates/navbarTemplates";
 
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditorSidebar from "../components/editor/EditorSidebar";
@@ -11,554 +12,6 @@ import EditorCanvas, {
 } from "../components/editor/EditorCanvas";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
-
-const NAVBAR_TEMPLATES = [
-  {
-    id: "standard",
-    name: "Standard Navbar",
-    description: "Logo left, links center, button right",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem 2rem",
-        background: "#ffffff",
-        borderBottom: "1px solid #e2e8f0",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "BrandLogo",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "800",
-            color: "#0f172a",
-          },
-        },
-        {
-          id: `container-links-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Home",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "About",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-            {
-              id: `text-l3-${baseId}`,
-              type: "text",
-              content: "Contact",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-          ],
-        },
-        {
-          id: `button-cta-${baseId}`,
-          type: "button",
-          content: "Get Started",
-          styles: {
-            padding: "10px 20px",
-            background: "#4f46e5",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "8px",
-            fontWeight: "600",
-            cursor: "pointer",
-            margin: "0",
-          },
-        },
-      ],
-    }),
-  },
-  {
-    id: "centered",
-    name: "Centered Logo",
-    description: "Links left, logo center, button right",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem 2rem",
-        background: "#ffffff",
-        borderBottom: "1px solid #e2e8f0",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `container-links-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-            flex: "1",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Shop",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "Collections",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-          ],
-        },
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "CENTER",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "800",
-            color: "#0f172a",
-            textAlign: "center",
-            flex: "1",
-          },
-        },
-        {
-          id: `container-cta-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-            flex: "1",
-          },
-          children: [
-            {
-              id: `button-cta-${baseId}`,
-              type: "button",
-              content: "Login",
-              styles: {
-                padding: "10px 20px",
-                background: "#0f172a",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "4px",
-                fontWeight: "600",
-                cursor: "pointer",
-                margin: "0",
-              },
-            },
-          ],
-        },
-      ],
-    }),
-  },
-  {
-    id: "dark",
-    name: "Dark Minimal",
-    description: "Dark background, simple layout",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1.2rem 2rem",
-        background: "#0f172a",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "Studio.",
-          styles: {
-            margin: "0",
-            fontSize: "1.25rem",
-            fontWeight: "700",
-            color: "#ffffff",
-            letterSpacing: "2px",
-          },
-        },
-        {
-          id: `container-links-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2.5rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Work",
-              styles: {
-                margin: "0",
-                fontWeight: "400",
-                cursor: "pointer",
-                color: "#cbd5e1",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "Agency",
-              styles: {
-                margin: "0",
-                fontWeight: "400",
-                cursor: "pointer",
-                color: "#cbd5e1",
-              },
-            },
-            {
-              id: `text-l3-${baseId}`,
-              type: "text",
-              content: "Contact",
-              styles: {
-                margin: "0",
-                fontWeight: "400",
-                cursor: "pointer",
-                color: "#cbd5e1",
-              },
-            },
-          ],
-        },
-      ],
-    }),
-  },
-  {
-    id: "right-aligned",
-    name: "Right Aligned",
-    description: "Logo on the left, all navigation grouped on the right",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem 2rem",
-        background: "#ffffff",
-        borderBottom: "1px solid #e2e8f0",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "Brand",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "800",
-            color: "#0f172a",
-          },
-        },
-        {
-          id: `container-group-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Features",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "Pricing",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#64748b",
-              },
-            },
-            {
-              id: `button-cta-${baseId}`,
-              type: "button",
-              content: "Sign Up",
-              styles: {
-                padding: "10px 20px",
-                background: "#0f172a",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                fontWeight: "600",
-                cursor: "pointer",
-                margin: "0",
-              },
-            },
-          ],
-        },
-      ],
-    }),
-  },
-  {
-    id: "floating-card",
-    name: "Floating Card",
-    description: "Rounded, elevated navbar that sits inside the page",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem 2rem",
-        background: "#ffffff",
-        borderRadius: "16px",
-        boxShadow:
-          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-        width: "90%",
-        margin: "1.5rem auto",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "App",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "900",
-            color: "#4f46e5",
-          },
-        },
-        {
-          id: `container-links-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2.5rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Product",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#0f172a",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "Company",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#0f172a",
-              },
-            },
-          ],
-        },
-        {
-          id: `button-cta-${baseId}`,
-          type: "button",
-          content: "Download",
-          styles: {
-            padding: "10px 20px",
-            background: "#eef2ff",
-            color: "#4f46e5",
-            border: "none",
-            borderRadius: "8px",
-            fontWeight: "700",
-            cursor: "pointer",
-            margin: "0",
-          },
-        },
-      ],
-    }),
-  },
-  {
-    id: "ecommerce",
-    name: "E-Commerce",
-    description: "Includes a search bar placeholder and utility links",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem 2rem",
-        background: "#ffffff",
-        borderBottom: "1px solid #e2e8f0",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "Storefront",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "900",
-            color: "#0f172a",
-          },
-        },
-        {
-          id: `container-search-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            padding: "0.6rem 1.2rem",
-            margin: "0",
-            background: "#f1f5f9",
-            borderRadius: "24px",
-            flex: "0 1 400px",
-          },
-          children: [
-            {
-              id: `text-search-${baseId}`,
-              type: "text",
-              content: "🔍 Search products...",
-              styles: { margin: "0", color: "#94a3b8", fontSize: "0.9rem" },
-            },
-          ],
-        },
-        {
-          id: `container-utils-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "1.5rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-u1-${baseId}`,
-              type: "text",
-              content: "👤 Account",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#0f172a",
-              },
-            },
-            {
-              id: `text-u2-${baseId}`,
-              type: "text",
-              content: "🛒 Cart (0)",
-              styles: {
-                margin: "0",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#0f172a",
-              },
-            },
-          ],
-        },
-      ],
-    }),
-  },
-];
 
 export default function EditorPage() {
   const location = useLocation();
@@ -624,6 +77,26 @@ export default function EditorPage() {
     });
   };
 
+  const updateElementProp = (
+    id: string,
+    property: keyof ElementSchema,
+    value: unknown,
+  ) => {
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === id) return { ...el, [property]: value };
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
+  };
+
   const removeElementRecursive = (
     elements: ElementSchema[],
     targetId: string,
@@ -654,7 +127,7 @@ export default function EditorPage() {
         );
       }
       const newEls = [...elements];
-      newEls.splice(targetIdx, 0, elToAdd);
+      newEls.splice(targetIdx + 1, 0, elToAdd);
       return newEls;
     }
     return elements.map((el) => ({
@@ -757,6 +230,40 @@ export default function EditorPage() {
     setSelectedIds([]);
   };
 
+  const handleDuplicateSelected = () => {
+    if (selectedIds.length !== 1) return;
+    const elToDup = findElement(pages, selectedIds[0]);
+    if (!elToDup) return;
+
+    const deepCloneWithNewIds = (el: ElementSchema): ElementSchema => ({
+      ...el,
+      id: `${el.type}-${crypto.randomUUID()}`,
+      children: el.children ? el.children.map(deepCloneWithNewIds) : undefined,
+    });
+
+    const clonedEl = deepCloneWithNewIds(elToDup);
+
+    setPages((prev) => {
+      const insertAfterRec = (elements: ElementSchema[]): ElementSchema[] => {
+        const idx = elements.findIndex((el) => el.id === selectedIds[0]);
+        if (idx > -1) {
+          const newElements = [...elements];
+          newElements.splice(idx + 1, 0, clonedEl);
+          return newElements;
+        }
+        return elements.map((el) => ({
+          ...el,
+          children: el.children ? insertAfterRec(el.children) : undefined,
+        }));
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: insertAfterRec(page.elements),
+      }));
+    });
+    setSelectedIds([clonedEl.id]);
+  };
+
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
       setSelectedIds((prev) =>
@@ -855,7 +362,9 @@ export default function EditorPage() {
           selectedElement={selectedElement}
           selectedIdsCount={selectedIds.length}
           onUpdateStyle={updateElementStyle}
+          onUpdateProp={updateElementProp}
           onDeleteSelected={handleDeleteSelected}
+          onDuplicateSelected={handleDuplicateSelected}
         />
       </div>
 
