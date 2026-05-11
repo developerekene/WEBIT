@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
 import type { ElementSchema } from "../engine/TemplateRenderer";
+import { NAVBAR_TEMPLATES } from "../templates/navbarTemplates";
 
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditorSidebar from "../components/editor/EditorSidebar";
@@ -24,6 +25,7 @@ export default function EditorPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalType, setModalType] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +77,26 @@ export default function EditorPage() {
     });
   };
 
+  const updateElementProp = (
+    id: string,
+    property: keyof ElementSchema,
+    value: unknown,
+  ) => {
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === id) return { ...el, [property]: value };
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
+  };
+
   const removeElementRecursive = (
     elements: ElementSchema[],
     targetId: string,
@@ -105,7 +127,7 @@ export default function EditorPage() {
         );
       }
       const newEls = [...elements];
-      newEls.splice(targetIdx, 0, elToAdd);
+      newEls.splice(targetIdx + 1, 0, elToAdd);
       return newEls;
     }
     return elements.map((el) => ({
@@ -130,8 +152,9 @@ export default function EditorPage() {
   };
 
   const handleAddSidebarElement = (elementType: ElementSchema["type"]) => {
+    const uniqueId = `${elementType}-${crypto.randomUUID()}`;
     const newElement: ElementSchema = {
-      id: `${elementType}-${Date.now()}`,
+      id: uniqueId,
       type: elementType,
       content: `New ${elementType}`,
       styles: {
@@ -172,6 +195,25 @@ export default function EditorPage() {
     }, 50);
   };
 
+  const handleAddTemplate = (template: ElementSchema) => {
+    setPages((prev) =>
+      prev.map((p) =>
+        p.id === activePageId
+          ? { ...p, elements: [...p.elements, template] }
+          : p,
+      ),
+    );
+    setSelectedIds([template.id]);
+    setModalType(null);
+
+    setTimeout(() => {
+      canvasRef.current?.scrollTo({
+        top: canvasRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 50);
+  };
+
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
     setPages((prev) => {
@@ -186,6 +228,40 @@ export default function EditorPage() {
       return prev.map((page) => ({ ...page, elements: delRec(page.elements) }));
     });
     setSelectedIds([]);
+  };
+
+  const handleDuplicateSelected = () => {
+    if (selectedIds.length !== 1) return;
+    const elToDup = findElement(pages, selectedIds[0]);
+    if (!elToDup) return;
+
+    const deepCloneWithNewIds = (el: ElementSchema): ElementSchema => ({
+      ...el,
+      id: `${el.type}-${crypto.randomUUID()}`,
+      children: el.children ? el.children.map(deepCloneWithNewIds) : undefined,
+    });
+
+    const clonedEl = deepCloneWithNewIds(elToDup);
+
+    setPages((prev) => {
+      const insertAfterRec = (elements: ElementSchema[]): ElementSchema[] => {
+        const idx = elements.findIndex((el) => el.id === selectedIds[0]);
+        if (idx > -1) {
+          const newElements = [...elements];
+          newElements.splice(idx + 1, 0, clonedEl);
+          return newElements;
+        }
+        return elements.map((el) => ({
+          ...el,
+          children: el.children ? insertAfterRec(el.children) : undefined,
+        }));
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: insertAfterRec(page.elements),
+      }));
+    });
+    setSelectedIds([clonedEl.id]);
   };
 
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
@@ -255,35 +331,146 @@ export default function EditorPage() {
   }
 
   return (
-    <div className={styles.editorLayout} onClick={() => setSelectedIds([])}>
-      <EditorTopBar viewMode={viewMode} setViewMode={setViewMode} />
-      <EditorSidebar onAddElement={handleAddSidebarElement} />
-      <EditorCanvas
-        pages={pages}
-        activePageId={activePageId}
-        viewMode={viewMode}
-        isDraggingOver={isDraggingOver}
-        canvasRef={canvasRef}
-        selectedIds={selectedIds}
-        onSetActivePage={setActivePageId}
-        onUpdatePageName={handleUpdatePageName}
-        onAddPage={handleAddPage}
-        onDragOver={(pageId, e) => {
-          e.preventDefault();
-          setIsDraggingOver(pageId);
-        }}
-        onDragLeave={() => setIsDraggingOver(null)}
-        onDropCanvas={handleDropCanvas}
-        onSelectElement={handleSelectElement}
-        onDragStartCanvas={handleDragStartCanvas}
-        onDropOnElement={handleDropOnElement}
-      />
-      <EditorInspector
-        selectedElement={selectedElement}
-        selectedIdsCount={selectedIds.length}
-        onUpdateStyle={updateElementStyle}
-        onDeleteSelected={handleDeleteSelected}
-      />
-    </div>
+    <>
+      <div className={styles.editorLayout} onClick={() => setSelectedIds([])}>
+        <EditorTopBar viewMode={viewMode} setViewMode={setViewMode} />
+        <EditorSidebar
+          onAddElement={handleAddSidebarElement}
+          onOpenModal={setModalType}
+        />
+        <EditorCanvas
+          pages={pages}
+          activePageId={activePageId}
+          viewMode={viewMode}
+          isDraggingOver={isDraggingOver}
+          canvasRef={canvasRef}
+          selectedIds={selectedIds}
+          onSetActivePage={setActivePageId}
+          onUpdatePageName={handleUpdatePageName}
+          onAddPage={handleAddPage}
+          onDragOver={(pageId, e) => {
+            e.preventDefault();
+            setIsDraggingOver(pageId);
+          }}
+          onDragLeave={() => setIsDraggingOver(null)}
+          onDropCanvas={handleDropCanvas}
+          onSelectElement={handleSelectElement}
+          onDragStartCanvas={handleDragStartCanvas}
+          onDropOnElement={handleDropOnElement}
+        />
+        <EditorInspector
+          selectedElement={selectedElement}
+          selectedIdsCount={selectedIds.length}
+          onUpdateStyle={updateElementStyle}
+          onUpdateProp={updateElementProp}
+          onDeleteSelected={handleDeleteSelected}
+          onDuplicateSelected={handleDuplicateSelected}
+        />
+      </div>
+
+      {modalType === "navbar" && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(15, 23, 42, 0.6)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setModalType(null)}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "2rem",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "800px",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#0f172a" }}>
+                Select a Navbar Template
+              </h2>
+              <button
+                onClick={() => setModalType(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  color: "#64748b",
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+              }}
+            >
+              {NAVBAR_TEMPLATES.map((template) => (
+                <div
+                  key={template.id}
+                  onClick={() =>
+                    handleAddTemplate(template.getSchema(Date.now()))
+                  }
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    padding: "1.5rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.5rem",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#4f46e5";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <h3
+                    style={{ margin: 0, fontSize: "1.1rem", color: "#0f172a" }}
+                  >
+                    {template.name}
+                  </h3>
+                  <p
+                    style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}
+                  >
+                    {template.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

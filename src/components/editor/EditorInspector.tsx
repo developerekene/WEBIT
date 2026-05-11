@@ -7,14 +7,22 @@ interface EditorInspectorProps {
   selectedElement: ElementSchema | null;
   selectedIdsCount: number;
   onUpdateStyle: (id: string, property: string, value: string) => void;
+  onUpdateProp: (
+    id: string,
+    property: keyof ElementSchema,
+    value: unknown,
+  ) => void;
   onDeleteSelected: () => void;
+  onDuplicateSelected: () => void;
 }
 
 export default function EditorInspector({
   selectedElement,
   selectedIdsCount,
   onUpdateStyle,
+  onUpdateProp,
   onDeleteSelected,
+  onDuplicateSelected,
 }: EditorInspectorProps) {
   const bg = String(selectedElement?.styles?.background || "transparent");
 
@@ -93,20 +101,100 @@ export default function EditorInspector({
       <div className={styles.panelHeader}>Inspector</div>
       <div className={styles.settingsGroup}>
         <h4>Editing: {selectedElement?.type.toUpperCase()}</h4>
-        <button
-          onClick={onDeleteSelected}
-          className={styles.btnSecondary}
-          style={{
-            width: "100%",
-            background: "#fee2e2",
-            color: "#ef4444",
-            borderColor: "#f87171",
-            marginBottom: "1rem",
-          }}
-        >
-          Delete Element
-        </button>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
+          <button
+            onClick={onDeleteSelected}
+            className={styles.btnSecondary}
+            style={{
+              flex: 1,
+              background: "#fee2e2",
+              color: "#ef4444",
+              borderColor: "#f87171",
+            }}
+          >
+            Delete
+          </button>
+          <button
+            onClick={onDuplicateSelected}
+            className={styles.btnSecondary}
+            style={{
+              flex: 1,
+              background: "#f1f5f9",
+              color: "#0f172a",
+              borderColor: "#cbd5e1",
+            }}
+          >
+            Duplicate
+          </button>
+        </div>
       </div>
+
+      {(selectedElement?.type === "text" ||
+        selectedElement?.type === "heading" ||
+        selectedElement?.type === "button" ||
+        selectedElement?.type === "image") && (
+        <div className={styles.settingsGroup}>
+          <h4>Content & Type</h4>
+
+          {(selectedElement.type === "text" ||
+            selectedElement.type === "heading" ||
+            selectedElement.type === "button") && (
+            <textarea
+              value={selectedElement.content || ""}
+              onChange={(e) =>
+                onUpdateProp(selectedElement.id, "content", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+                minHeight: "80px",
+                marginBottom: "1rem",
+              }}
+            />
+          )}
+
+          {selectedElement.type === "image" && (
+            <input
+              type="text"
+              value={selectedElement.src || ""}
+              placeholder="https://..."
+              onChange={(e) =>
+                onUpdateProp(selectedElement.id, "src", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+                marginBottom: "1rem",
+              }}
+            />
+          )}
+
+          {(selectedElement.type === "text" ||
+            selectedElement.type === "heading") && (
+            <button
+              onClick={() => onUpdateProp(selectedElement.id, "type", "image")}
+              className={styles.btnSecondary}
+              style={{ width: "100%", fontSize: "0.8rem" }}
+            >
+              Convert to Image
+            </button>
+          )}
+
+          {selectedElement.type === "image" && (
+            <button
+              onClick={() => onUpdateProp(selectedElement.id, "type", "text")}
+              className={styles.btnSecondary}
+              style={{ width: "100%", fontSize: "0.8rem" }}
+            >
+              Convert to Text
+            </button>
+          )}
+        </div>
+      )}
 
       {(selectedElement?.type === "section" ||
         selectedElement?.type === "container") && (
