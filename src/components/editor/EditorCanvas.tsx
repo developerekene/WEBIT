@@ -48,15 +48,18 @@ export default function EditorCanvas({
   onDragStartCanvas,
   onDropOnElement,
 }: EditorCanvasProps) {
-  const [scale, setScale] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const wrapperRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && document.activeElement?.tagName !== "INPUT") {
+      if (
+        e.code === "Space" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
         e.preventDefault();
         setIsSpacePressed(true);
       }
@@ -77,9 +80,29 @@ export default function EditorCanvas({
     if (!wrapper) return;
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.ctrlKey || e.metaKey)
-        setScale((prev) => Math.min(Math.max(0.1, prev - e.deltaY * 0.01), 5));
-      else setPan((prev) => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
+      setViewport((prev) => {
+        if (e.ctrlKey || e.metaKey) {
+          const zoomSensitivity = 0.01;
+          const delta = -e.deltaY * zoomSensitivity;
+          const newScale = Math.min(Math.max(0.1, prev.scale + delta), 5);
+          if (newScale === prev.scale) return prev;
+          const rect = wrapper.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          return {
+            scale: newScale,
+            x: x - (x - prev.x) * (newScale / prev.scale),
+            y: y - (y - prev.y) * (newScale / prev.scale),
+          };
+        } else {
+          const isShiftHorizontal = e.shiftKey && e.deltaX === 0;
+          return {
+            ...prev,
+            x: prev.x - (isShiftHorizontal ? e.deltaY : e.deltaX),
+            y: prev.y - (isShiftHorizontal ? 0 : e.deltaY),
+          };
+        }
+      });
     };
     wrapper.addEventListener("wheel", handleWheel, { passive: false });
     return () => wrapper.removeEventListener("wheel", handleWheel);
@@ -97,7 +120,8 @@ export default function EditorCanvas({
       }}
       onPointerMove={(e) => {
         if (isPanning)
-          setPan((prev) => ({
+          setViewport((prev) => ({
+            ...prev,
             x: prev.x + e.movementX,
             y: prev.y + e.movementY,
           }));
@@ -109,14 +133,14 @@ export default function EditorCanvas({
         position: "relative",
         cursor: isSpacePressed || isPanning ? "grabbing" : "default",
         backgroundImage: "radial-gradient(#cbd5e1 1.5px, transparent 0)",
-        backgroundSize: `${24 * scale}px ${24 * scale}px`,
-        backgroundPosition: `${pan.x}px ${pan.y}px`,
+        backgroundSize: `${24 * viewport.scale}px ${24 * viewport.scale}px`,
+        backgroundPosition: `${viewport.x}px ${viewport.y}px`,
       }}
     >
       <div
         style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-          transformOrigin: "center center",
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
+          transformOrigin: "0 0",
           transition: isPanning ? "none" : "transform 0.05s linear",
           width: "100%",
           height: "100%",
@@ -273,7 +297,20 @@ export default function EditorCanvas({
         }}
       >
         <button
-          onClick={() => setScale((s) => Math.max(0.1, s - 0.1))}
+          onClick={() => {
+            setViewport((prev) => {
+              const newScale = Math.max(0.1, prev.scale - 0.1);
+              if (newScale === prev.scale || !wrapperRef.current) return prev;
+              const rect = wrapperRef.current.getBoundingClientRect();
+              const x = rect.width / 2;
+              const y = rect.height / 2;
+              return {
+                scale: newScale,
+                x: x - (x - prev.x) * (newScale / prev.scale),
+                y: y - (y - prev.y) * (newScale / prev.scale),
+              };
+            });
+          }}
           style={{
             padding: "4px 12px",
             border: "none",
@@ -295,10 +332,23 @@ export default function EditorCanvas({
             userSelect: "none",
           }}
         >
-          {Math.round(scale * 100)}%
+          {Math.round(viewport.scale * 100)}%
         </span>
         <button
-          onClick={() => setScale((s) => Math.min(5, s + 0.1))}
+          onClick={() => {
+            setViewport((prev) => {
+              const newScale = Math.min(5, prev.scale + 0.1);
+              if (newScale === prev.scale || !wrapperRef.current) return prev;
+              const rect = wrapperRef.current.getBoundingClientRect();
+              const x = rect.width / 2;
+              const y = rect.height / 2;
+              return {
+                scale: newScale,
+                x: x - (x - prev.x) * (newScale / prev.scale),
+                y: y - (y - prev.y) * (newScale / prev.scale),
+              };
+            });
+          }}
           style={{
             padding: "4px 12px",
             border: "none",

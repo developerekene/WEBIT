@@ -77,15 +77,12 @@ export default function EditorPage() {
     });
   };
 
-  const updateElementProp = (
-    id: string,
-    property: keyof ElementSchema,
-    value: unknown,
-  ) => {
+  const updateElementProp = (id: string, property: string, value: unknown) => {
     setPages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
-          if (el.id === id) return { ...el, [property]: value };
+          if (el.id === id)
+            return { ...el, [property]: value } as ElementSchema;
           if (el.children) return { ...el, children: updateRec(el.children) };
           return el;
         });
@@ -230,38 +227,42 @@ export default function EditorPage() {
     setSelectedIds([]);
   };
 
-  const handleDuplicateSelected = () => {
+  const handleAddNavbarLink = () => {
     if (selectedIds.length !== 1) return;
-    const elToDup = findElement(pages, selectedIds[0]);
-    if (!elToDup) return;
-
-    const deepCloneWithNewIds = (el: ElementSchema): ElementSchema => ({
-      ...el,
-      id: `${el.type}-${crypto.randomUUID()}`,
-      children: el.children ? el.children.map(deepCloneWithNewIds) : undefined,
-    });
-
-    const clonedEl = deepCloneWithNewIds(elToDup);
+    const targetId = selectedIds[0];
+    const newLink: ElementSchema = {
+      id: `text-l-${Date.now()}`,
+      type: "text",
+      content: "New Link",
+      styles: {
+        margin: "0",
+        fontWeight: "600",
+        cursor: "pointer",
+        color: "#64748b",
+      },
+    };
 
     setPages((prev) => {
-      const insertAfterRec = (elements: ElementSchema[]): ElementSchema[] => {
-        const idx = elements.findIndex((el) => el.id === selectedIds[0]);
-        if (idx > -1) {
-          const newElements = [...elements];
-          newElements.splice(idx + 1, 0, clonedEl);
-          return newElements;
-        }
-        return elements.map((el) => ({
-          ...el,
-          children: el.children ? insertAfterRec(el.children) : undefined,
-        }));
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === targetId && el.type === "container") {
+            return { ...el, children: [...(el.children || []), newLink] };
+          }
+          if (el.children && el.children.some((c) => c.id === targetId)) {
+            const targetIdx = el.children.findIndex((c) => c.id === targetId);
+            const newChildren = [...el.children];
+            newChildren.splice(targetIdx + 1, 0, newLink);
+            return { ...el, children: newChildren };
+          }
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
       };
       return prev.map((page) => ({
         ...page,
-        elements: insertAfterRec(page.elements),
+        elements: updateRec(page.elements),
       }));
     });
-    setSelectedIds([clonedEl.id]);
   };
 
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
@@ -364,7 +365,7 @@ export default function EditorPage() {
           onUpdateStyle={updateElementStyle}
           onUpdateProp={updateElementProp}
           onDeleteSelected={handleDeleteSelected}
-          onDuplicateSelected={handleDuplicateSelected}
+          onAddNavbarLink={handleAddNavbarLink}
         />
       </div>
 
