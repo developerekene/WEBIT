@@ -9,7 +9,6 @@
   width: 100vw;
   background: var(--bg-main, #f8fafc);
   overflow: hidden;
-  font-family: sans-serif;
 }
 
 .topBar {

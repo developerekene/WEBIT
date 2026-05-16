@@ -52,6 +52,9 @@ export default function EditorCanvas({
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const wrapperRef = useRef<HTMLElement>(null);
+  const lastTouchRef = useRef<{ x: number; y: number; dist?: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -119,7 +122,7 @@ export default function EditorCanvas({
         }
       }}
       onPointerMove={(e) => {
-        if (isPanning)
+        if (isPanning && e.pointerType !== "touch")
           setViewport((prev) => ({
             ...prev,
             x: prev.x + e.movementX,
@@ -128,7 +131,75 @@ export default function EditorCanvas({
       }}
       onPointerUp={() => setIsPanning(false)}
       onPointerLeave={() => setIsPanning(false)}
+      onTouchStart={(e) => {
+        if (e.touches.length === 1) {
+          lastTouchRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          };
+        } else if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          lastTouchRef.current = { x: cx, y: cy, dist };
+        }
+      }}
+      onTouchMove={(e) => {
+        if (
+          e.touches.length === 1 &&
+          lastTouchRef.current &&
+          !lastTouchRef.current.dist
+        ) {
+          const dx = e.touches[0].clientX - lastTouchRef.current.x;
+          const dy = e.touches[0].clientY - lastTouchRef.current.y;
+          setViewport((prev) => ({
+            ...prev,
+            x: prev.x + dx,
+            y: prev.y + dy,
+          }));
+          lastTouchRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          };
+        } else if (e.touches.length === 2 && lastTouchRef.current?.dist) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+          const scaleDiff = dist / lastTouchRef.current.dist;
+
+          setViewport((prev) => {
+            const newScale = Math.min(Math.max(0.1, prev.scale * scaleDiff), 5);
+            if (newScale === prev.scale || !wrapperRef.current) return prev;
+            const rect = wrapperRef.current.getBoundingClientRect();
+            const x = cx - rect.left;
+            const y = cy - rect.top;
+            return {
+              scale: newScale,
+              x: x - (x - prev.x) * (newScale / prev.scale),
+              y: y - (y - prev.y) * (newScale / prev.scale),
+            };
+          });
+
+          lastTouchRef.current = { x: cx, y: cy, dist };
+        }
+      }}
+      onTouchEnd={(e) => {
+        if (e.touches.length === 0) {
+          lastTouchRef.current = null;
+        } else if (e.touches.length === 1) {
+          lastTouchRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          };
+        }
+      }}
       style={{
+        touchAction: "none",
         overflow: "hidden",
         position: "relative",
         cursor: isSpacePressed || isPanning ? "grabbing" : "default",
