@@ -2,6 +2,19 @@ import { useState } from "react";
 import styles from "../../styles/EditorPage.module.css";
 import type { ElementSchema } from "../../engine/TemplateRenderer";
 
+const GOOGLE_FONTS = [
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Montserrat",
+  "Poppins",
+  "Inter",
+  "Oswald",
+  "Raleway",
+  "Nunito",
+  "Playfair Display",
+];
+
 type BackgroundMode = "transparent" | "solid" | "gradient";
 
 interface ExtendedElement extends ElementSchema {
@@ -124,6 +137,35 @@ export default function EditorInspector({
       }
     });
     setCustomCSS("");
+  };
+
+  const handleFontFamilyChange = (font: string) => {
+    if (GOOGLE_FONTS.includes(font)) {
+      const linkId = `google-font-${font.replace(/\s+/g, "-")}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement("link");
+        link.id = linkId;
+        link.rel = "stylesheet";
+        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800;900&display=swap`;
+        document.head.appendChild(link);
+      }
+    }
+    onUpdateStyle(selectedElement.id, "fontFamily", font);
+  };
+
+  const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fontUrl = URL.createObjectURL(file);
+    const fontName = `CustomFont_${Date.now()}`;
+    const newStyle = document.createElement("style");
+    newStyle.appendChild(
+      document.createTextNode(
+        `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`,
+      ),
+    );
+    document.head.appendChild(newStyle);
+    onUpdateStyle(selectedElement.id, "fontFamily", fontName);
   };
 
   const type = selectedElement.type;
@@ -359,6 +401,56 @@ export default function EditorInspector({
       {isText && (
         <div className={styles.settingsGroup}>
           <h4>Typography</h4>
+          <div style={{ marginBottom: "1rem" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Font Family
+            </label>
+            <select
+              value={selectedElement.styles?.fontFamily || "inherit"}
+              onChange={(e) => handleFontFamilyChange(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+                marginBottom: "8px",
+              }}
+            >
+              <option value="inherit">Default (Inherit)</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <optgroup label="Google Fonts">
+                {GOOGLE_FONTS.map((font) => (
+                  <option key={font} value={font}>
+                    {font}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <label
+              style={{
+                fontSize: "0.75rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Or upload custom font (.ttf, .otf, .woff)
+            </label>
+            <input
+              type="file"
+              accept=".ttf,.otf,.woff,.woff2"
+              onChange={handleCustomFontUpload}
+              style={{ width: "100%", fontSize: "0.75rem" }}
+            />
+          </div>
           <div style={{ marginBottom: "1rem" }}>
             <label
               style={{
