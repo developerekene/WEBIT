@@ -139,18 +139,57 @@ export default function EditorInspector({
     setCustomCSS("");
   };
 
-  const handleFontFamilyChange = (font: string) => {
-    if (GOOGLE_FONTS.includes(font)) {
-      const linkId = `google-font-${font.replace(/\s+/g, "-")}`;
-      if (!document.getElementById(linkId)) {
-        const link = document.createElement("link");
-        link.id = linkId;
-        link.rel = "stylesheet";
-        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800;900&display=swap`;
-        document.head.appendChild(link);
+  const animateFontChange = async (
+    fontName: string,
+    elementId: string,
+    loadFontAction: () => void,
+  ) => {
+    onUpdateStyle(
+      elementId,
+      "transition",
+      "opacity 0.3s ease, filter 0.3s ease",
+    );
+    onUpdateStyle(elementId, "opacity", "0.3");
+    onUpdateStyle(elementId, "filter", "blur(4px)");
+
+    loadFontAction();
+
+    try {
+      if (document.fonts && document.fonts.load) {
+        await Promise.race([
+          document.fonts.load(`16px "${fontName}"`),
+          new Promise((resolve) => setTimeout(resolve, 1500)),
+        ]);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
+    } catch (err) {
+      console.warn("Font load timeout or error", err);
     }
-    onUpdateStyle(selectedElement.id, "fontFamily", font);
+
+    onUpdateStyle(elementId, "fontFamily", fontName);
+    onUpdateStyle(elementId, "opacity", "1");
+    onUpdateStyle(elementId, "filter", "blur(0px)");
+
+    setTimeout(() => {
+      onUpdateStyle(elementId, "transition", "none");
+      onUpdateStyle(elementId, "filter", "none");
+    }, 300);
+  };
+
+  const handleFontFamilyChange = (font: string) => {
+    animateFontChange(font, selectedElement.id, () => {
+      if (GOOGLE_FONTS.includes(font)) {
+        const linkId = `google-font-${font.replace(/\s+/g, "-")}`;
+        if (!document.getElementById(linkId)) {
+          const link = document.createElement("link");
+          link.id = linkId;
+          link.rel = "stylesheet";
+          link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800;900&display=swap`;
+          document.head.appendChild(link);
+        }
+      }
+    });
   };
 
   const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,14 +197,15 @@ export default function EditorInspector({
     if (!file) return;
     const fontUrl = URL.createObjectURL(file);
     const fontName = `CustomFont_${Date.now()}`;
-    const newStyle = document.createElement("style");
-    newStyle.appendChild(
-      document.createTextNode(
-        `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`,
-      ),
-    );
-    document.head.appendChild(newStyle);
-    onUpdateStyle(selectedElement.id, "fontFamily", fontName);
+    animateFontChange(fontName, selectedElement.id, () => {
+      const newStyle = document.createElement("style");
+      newStyle.appendChild(
+        document.createTextNode(
+          `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`,
+        ),
+      );
+      document.head.appendChild(newStyle);
+    });
   };
 
   const type = selectedElement.type;
