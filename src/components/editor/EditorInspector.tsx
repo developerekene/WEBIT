@@ -13,6 +13,36 @@ const GOOGLE_FONTS = [
   "Raleway",
   "Nunito",
   "Playfair Display",
+  "Ubuntu",
+  "Merriweather",
+  "Roboto Slab",
+  "PT Sans",
+  "Rubik",
+  "Work Sans",
+  "Lora",
+  "Fira Sans",
+  "Quicksand",
+  "Barlow",
+  "Inconsolata",
+  "Mulish",
+  "Titillium Web",
+  "Josefin Sans",
+  "Anton",
+  "Bebas Neue",
+  "Dancing Script",
+  "Pacifico",
+  "Caveat",
+  "Righteous",
+  "Abril Fatface",
+  "Cinzel",
+  "Lobster",
+  "Comfortaa",
+  "Exo 2",
+  "Questrial",
+  "Space Grotesk",
+  "Syne",
+  "Outfit",
+  "Manrope",
 ];
 
 type BackgroundMode = "transparent" | "solid" | "gradient";
@@ -42,10 +72,16 @@ export default function EditorInspector({
 }: EditorInspectorProps) {
   const [customCSS, setCustomCSS] = useState("");
   const [prevId, setPrevId] = useState<string | undefined>(selectedElement?.id);
+  const [isFontLoading, setIsFontLoading] = useState(false);
+  const [loadingFontName, setLoadingFontName] = useState("");
+  const [targetFont, setTargetFont] = useState("");
 
   if (selectedElement?.id !== prevId) {
     setPrevId(selectedElement?.id);
     setCustomCSS("");
+    setIsFontLoading(false);
+    setLoadingFontName("");
+    setTargetFont("");
   }
 
   if (selectedIdsCount === 0 || !selectedElement) {
@@ -139,73 +175,95 @@ export default function EditorInspector({
     setCustomCSS("");
   };
 
-  const animateFontChange = async (
-    fontName: string,
-    elementId: string,
-    loadFontAction: () => void,
-  ) => {
-    onUpdateStyle(
-      elementId,
-      "transition",
-      "opacity 0.3s ease, filter 0.3s ease",
-    );
-    onUpdateStyle(elementId, "opacity", "0.3");
-    onUpdateStyle(elementId, "filter", "blur(4px)");
+  const handleFontFamilyChange = async (font: string) => {
+    if (
+      font === "inherit" ||
+      font === "Arial, sans-serif" ||
+      font === "'Times New Roman', serif"
+    ) {
+      onUpdateStyle(selectedElement.id, "fontFamily", font);
+      return;
+    }
 
-    loadFontAction();
+    setIsFontLoading(true);
+    setLoadingFontName(font);
+    setTargetFont(font);
+
+    if (GOOGLE_FONTS.includes(font)) {
+      const linkId = `google-font-${font.replace(/\s+/g, "-")}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement("link");
+        link.id = linkId;
+        link.rel = "stylesheet";
+        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800;900&display=swap`;
+
+        const loadPromise = new Promise((resolve) => {
+          link.onload = resolve;
+          link.onerror = resolve;
+        });
+
+        document.head.appendChild(link);
+        await loadPromise;
+      }
+    }
+
+    try {
+      if (document.fonts && document.fonts.load) {
+        await Promise.race([
+          document.fonts.load(`16px "${font}"`),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    } catch (err) {
+      console.warn(`Failed to load font: ${font}`, err);
+    }
+
+    onUpdateStyle(selectedElement.id, "fontFamily", font);
+    setIsFontLoading(false);
+    setLoadingFontName("");
+    setTargetFont("");
+  };
+
+  const handleCustomFontUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fontUrl = URL.createObjectURL(file);
+    const fontName = `CustomFont_${Date.now()}`;
+
+    setIsFontLoading(true);
+    setLoadingFontName(file.name);
+    setTargetFont(fontName);
+
+    const newStyle = document.createElement("style");
+    newStyle.appendChild(
+      document.createTextNode(
+        `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`,
+      ),
+    );
+    document.head.appendChild(newStyle);
 
     try {
       if (document.fonts && document.fonts.load) {
         await Promise.race([
           document.fonts.load(`16px "${fontName}"`),
-          new Promise((resolve) => setTimeout(resolve, 1500)),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
         ]);
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     } catch (err) {
-      console.warn("Font load timeout or error", err);
+      console.warn(`Failed to load custom font: ${file.name}`, err);
     }
 
-    onUpdateStyle(elementId, "fontFamily", fontName);
-    onUpdateStyle(elementId, "opacity", "1");
-    onUpdateStyle(elementId, "filter", "blur(0px)");
-
-    setTimeout(() => {
-      onUpdateStyle(elementId, "transition", "none");
-      onUpdateStyle(elementId, "filter", "none");
-    }, 300);
-  };
-
-  const handleFontFamilyChange = (font: string) => {
-    animateFontChange(font, selectedElement.id, () => {
-      if (GOOGLE_FONTS.includes(font)) {
-        const linkId = `google-font-${font.replace(/\s+/g, "-")}`;
-        if (!document.getElementById(linkId)) {
-          const link = document.createElement("link");
-          link.id = linkId;
-          link.rel = "stylesheet";
-          link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800;900&display=swap`;
-          document.head.appendChild(link);
-        }
-      }
-    });
-  };
-
-  const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const fontUrl = URL.createObjectURL(file);
-    const fontName = `CustomFont_${Date.now()}`;
-    animateFontChange(fontName, selectedElement.id, () => {
-      const newStyle = document.createElement("style");
-      newStyle.appendChild(
-        document.createTextNode(
-          `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`,
-        ),
-      );
-      document.head.appendChild(newStyle);
-    });
+    onUpdateStyle(selectedElement.id, "fontFamily", fontName);
+    setIsFontLoading(false);
+    setLoadingFontName("");
+    setTargetFont("");
   };
 
   const type = selectedElement.type;
@@ -257,24 +315,7 @@ export default function EditorInspector({
 
       {(isText || isImage) && (
         <div className={styles.settingsGroup}>
-          <h4>Content & Link</h4>
-
-          {isText && (
-            <textarea
-              value={elemData.content || ""}
-              onChange={(e) =>
-                onUpdateProp(selectedElement.id, "content", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #e2e8f0",
-                minHeight: "80px",
-                marginBottom: "1rem",
-              }}
-            />
-          )}
+          <h4>Links & Asset Source</h4>
 
           {isImage && (
             <input
@@ -453,14 +494,20 @@ export default function EditorInspector({
               Font Family
             </label>
             <select
-              value={selectedElement.styles?.fontFamily || "inherit"}
+              value={
+                isFontLoading
+                  ? targetFont
+                  : selectedElement.styles?.fontFamily || "inherit"
+              }
               onChange={(e) => handleFontFamilyChange(e.target.value)}
+              disabled={isFontLoading}
               style={{
                 width: "100%",
                 padding: "8px",
                 borderRadius: "6px",
                 border: "1px solid #e2e8f0",
                 marginBottom: "8px",
+                opacity: isFontLoading ? 0.6 : 1,
               }}
             >
               <option value="inherit">Default (Inherit)</option>
@@ -474,6 +521,36 @@ export default function EditorInspector({
                 ))}
               </optgroup>
             </select>
+
+            {isFontLoading && (
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#4f46e5",
+                  marginTop: "4px",
+                  marginBottom: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    border: "2px solid #e0e7ff",
+                    borderTop: "2px solid #4f46e5",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+                Loading {loadingFontName}...
+                <style>
+                  {`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}
+                </style>
+              </div>
+            )}
+
             <label
               style={{
                 fontSize: "0.75rem",
@@ -488,6 +565,7 @@ export default function EditorInspector({
               type="file"
               accept=".ttf,.otf,.woff,.woff2"
               onChange={handleCustomFontUpload}
+              disabled={isFontLoading}
               style={{ width: "100%", fontSize: "0.75rem" }}
             />
           </div>

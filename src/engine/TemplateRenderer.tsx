@@ -24,6 +24,7 @@ interface TemplateRendererProps {
   onSelect?: (id: string, e: React.MouseEvent) => void;
   onDragStart?: (id: string, e: React.DragEvent) => void;
   onDrop?: (targetId: string, e: React.DragEvent) => void;
+  onUpdateProp?: (id: string, property: string, value: unknown) => void;
 }
 
 export const TemplateRenderer = ({
@@ -32,18 +33,23 @@ export const TemplateRenderer = ({
   onSelect,
   onDragStart,
   onDrop,
+  onUpdateProp,
 }: TemplateRendererProps) => {
   const renderElement = (el: ElementSchema) => {
     const isSelected = selectedIds.includes(el.id);
+    const isTextElement =
+      el.type === "heading" || el.type === "text" || el.type === "button";
+    const canEdit = isSelected && isTextElement;
 
     const mergedStyles: React.CSSProperties = {
       ...el.styles,
       boxShadow: isSelected
         ? "inset 0 0 0 2px #4f46e5, 0 4px 12px rgba(79, 70, 229, 0.15)"
         : "none",
-      cursor: onSelect ? "pointer" : "default",
+      cursor: canEdit ? "text" : onSelect ? "pointer" : "default",
       transition: "all 0.15s ease-in-out",
       position: "relative",
+      outline: "none",
     };
 
     const handleClick = (e: React.MouseEvent) => {
@@ -54,7 +60,7 @@ export const TemplateRenderer = ({
     };
 
     const handleDragStart = (e: React.DragEvent) => {
-      if (onDragStart) {
+      if (onDragStart && !canEdit) {
         e.stopPropagation();
         onDragStart(el.id, e);
       }
@@ -72,15 +78,29 @@ export const TemplateRenderer = ({
       }
     };
 
+    const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+      if (onUpdateProp && e.currentTarget.innerText !== el.content) {
+        onUpdateProp(el.id, "content", e.currentTarget.innerText);
+      }
+    };
+
     const commonProps = {
       key: el.id,
       onClick: handleClick,
-      draggable: !!onDragStart,
+      draggable: !!onDragStart && !canEdit,
       onDragStart: handleDragStart,
       onDragOver: handleDragOver,
       onDrop: handleDrop,
       style: mergedStyles,
     };
+
+    const textEditableProps = isTextElement
+      ? {
+          contentEditable: canEdit,
+          suppressContentEditableWarning: true,
+          onBlur: handleBlur,
+        }
+      : {};
 
     switch (el.type) {
       case "section":
@@ -90,11 +110,23 @@ export const TemplateRenderer = ({
       case "container":
         return <div {...commonProps}>{el.children?.map(renderElement)}</div>;
       case "heading":
-        return <h1 {...commonProps}>{el.content}</h1>;
+        return (
+          <h1 {...commonProps} {...textEditableProps}>
+            {el.content}
+          </h1>
+        );
       case "text":
-        return <p {...commonProps}>{el.content}</p>;
+        return (
+          <p {...commonProps} {...textEditableProps}>
+            {el.content}
+          </p>
+        );
       case "button":
-        return <button {...commonProps}>{el.content}</button>;
+        return (
+          <button {...commonProps} {...textEditableProps}>
+            {el.content}
+          </button>
+        );
       case "image":
         return (
           <img
