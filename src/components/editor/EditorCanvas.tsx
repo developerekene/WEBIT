@@ -29,6 +29,7 @@ interface EditorCanvasProps {
   onSelectElement: (id: string, e: React.MouseEvent) => void;
   onDragStartCanvas: (id: string, e: React.DragEvent) => void;
   onDropOnElement: (targetId: string, e: React.DragEvent) => void;
+  onUpdateProp: (id: string, property: string, value: unknown) => void;
 }
 
 export default function EditorCanvas({
@@ -47,6 +48,7 @@ export default function EditorCanvas({
   onSelectElement,
   onDragStartCanvas,
   onDropOnElement,
+  onUpdateProp,
 }: EditorCanvasProps) {
   const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -61,7 +63,8 @@ export default function EditorCanvas({
       if (
         e.code === "Space" &&
         document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
+        document.activeElement?.tagName !== "TEXTAREA" &&
+        !document.activeElement?.hasAttribute("contenteditable")
       ) {
         e.preventDefault();
         setIsSpacePressed(true);
@@ -313,6 +316,7 @@ export default function EditorCanvas({
                       }}
                       onDragStart={onDragStartCanvas}
                       onDrop={onDropOnElement}
+                      onUpdateProp={onUpdateProp}
                     />
                   </div>
                 ) : (

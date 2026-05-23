@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
 import type { ElementSchema } from "../engine/TemplateRenderer";
-import { NAVBAR_TEMPLATES } from "../templates/navbarTemplates";
 
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditorSidebar from "../components/editor/EditorSidebar";
@@ -10,6 +9,7 @@ import EditorInspector from "../components/editor/EditorInspector";
 import EditorCanvas, {
   type PageSchema,
 } from "../components/editor/EditorCanvas";
+import { NAVBAR_TEMPLATES } from "../templates/navbarTemplates";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
 
@@ -358,6 +358,7 @@ export default function EditorPage() {
           onSelectElement={handleSelectElement}
           onDragStartCanvas={handleDragStartCanvas}
           onDropOnElement={handleDropOnElement}
+          onUpdateProp={updateElementProp}
         />
         <EditorInspector
           selectedElement={selectedElement}
