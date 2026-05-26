@@ -9,7 +9,7 @@ import EditorInspector from "../components/editor/EditorInspector";
 import EditorCanvas, {
   type PageSchema,
 } from "../components/editor/EditorCanvas";
-import { NAVBAR_TEMPLATES } from "../templates/navbarTemplates";
+import { NAVBAR_TEMPLATES } from "../templates/NavbarTemplates";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
 
@@ -265,6 +265,166 @@ export default function EditorPage() {
     });
   };
 
+  const handleAddNavbarDropdown = () => {
+    if (selectedIds.length !== 1) return;
+    const targetId = selectedIds[0];
+    const newDropdown: ElementSchema = {
+      id: `dropdown-${Date.now()}`,
+      type: "container",
+      styles: {
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        cursor: "pointer",
+      },
+      children: [
+        {
+          id: `dropdown-trigger-${Date.now()}`,
+          type: "text",
+          content: "Dropdown ▾",
+          styles: {
+            margin: "0",
+            fontWeight: "600",
+            color: "#64748b",
+          },
+        },
+        {
+          id: `dropdown-menu-${Date.now()}`,
+          type: "container",
+          styles: {
+            position: "absolute",
+            top: "100%",
+            left: "0",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            padding: "0.5rem 1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            minWidth: "150px",
+            zIndex: "50",
+            borderRadius: "8px",
+            marginTop: "0.5rem",
+          },
+          children: [
+            {
+              id: `text-l-${Date.now()}-1`,
+              type: "text",
+              content: "Item 1",
+              styles: { margin: "0", color: "#64748b", cursor: "pointer" },
+            },
+            {
+              id: `text-l-${Date.now()}-2`,
+              type: "text",
+              content: "Item 2",
+              styles: { margin: "0", color: "#64748b", cursor: "pointer" },
+            },
+          ],
+        },
+      ],
+    };
+
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === targetId && el.type === "container") {
+            return { ...el, children: [...(el.children || []), newDropdown] };
+          }
+          if (el.children && el.children.some((c) => c.id === targetId)) {
+            const targetIdx = el.children.findIndex((c) => c.id === targetId);
+            const newChildren = [...el.children];
+            newChildren.splice(targetIdx + 1, 0, newDropdown);
+            return { ...el, children: newChildren };
+          }
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
+  };
+
+  const handleTurnIntoDropdown = () => {
+    if (selectedIds.length !== 1) return;
+    const targetId = selectedIds[0];
+
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        return elements.map((el) => {
+          if (el.id === targetId && el.type === "text") {
+            return {
+              id: el.id, // keep the same ID so selection highlights remain
+              type: "container",
+              styles: {
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+                cursor: "pointer",
+              },
+              children: [
+                {
+                  ...el,
+                  id: `dropdown-trigger-${Date.now()}`,
+                  content: `${el.content || "Link"} ▾`,
+                },
+                {
+                  id: `dropdown-menu-${Date.now()}`,
+                  type: "container",
+                  styles: {
+                    position: "absolute",
+                    top: "100%",
+                    left: "0",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    padding: "0.5rem 1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.5rem",
+                    minWidth: "150px",
+                    zIndex: "50",
+                    borderRadius: "8px",
+                    marginTop: "0.5rem",
+                  },
+                  children: [
+                    {
+                      id: `text-l-${Date.now()}-1`,
+                      type: "text",
+                      content: "Sub Item 1",
+                      styles: {
+                        margin: "0",
+                        color: "#64748b",
+                        cursor: "pointer",
+                      },
+                    },
+                    {
+                      id: `text-l-${Date.now()}-2`,
+                      type: "text",
+                      content: "Sub Item 2",
+                      styles: {
+                        margin: "0",
+                        color: "#64748b",
+                        cursor: "pointer",
+                      },
+                    },
+                  ],
+                },
+              ],
+            } as ElementSchema;
+          }
+          if (el.children) return { ...el, children: updateRec(el.children) };
+          return el;
+        });
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
+  };
+
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
       setSelectedIds((prev) =>
@@ -367,6 +527,8 @@ export default function EditorPage() {
           onUpdateProp={updateElementProp}
           onDeleteSelected={handleDeleteSelected}
           onAddNavbarLink={handleAddNavbarLink}
+          onAddNavbarDropdown={handleAddNavbarDropdown}
+          onTurnIntoDropdown={handleTurnIntoDropdown}
         />
       </div>
 

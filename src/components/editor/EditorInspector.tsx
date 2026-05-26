@@ -60,6 +60,8 @@ interface EditorInspectorProps {
   onUpdateProp: (id: string, property: string, value: unknown) => void;
   onDeleteSelected: () => void;
   onAddNavbarLink: () => void;
+  onAddNavbarDropdown: () => void;
+  onTurnIntoDropdown: () => void;
 }
 
 export default function EditorInspector({
@@ -69,6 +71,8 @@ export default function EditorInspector({
   onUpdateProp,
   onDeleteSelected,
   onAddNavbarLink,
+  onAddNavbarDropdown,
+  onTurnIntoDropdown,
 }: EditorInspectorProps) {
   const [customCSS, setCustomCSS] = useState("");
   const [prevId, setPrevId] = useState<string | undefined>(selectedElement?.id);
@@ -297,20 +301,52 @@ export default function EditorInspector({
           selectedElement.id.includes("text-l") ||
           selectedElement.id.includes("group") ||
           selectedElement.id.includes("utils")) && (
-          <button
-            onClick={onAddNavbarLink}
-            className={styles.btnSecondary}
-            style={{
-              width: "100%",
-              background: "#f1f5f9",
-              color: "#0f172a",
-              borderColor: "#cbd5e1",
-              marginTop: "0.5rem",
-            }}
-          >
-            + Add Navbar Link
-          </button>
+          <>
+            <button
+              onClick={onAddNavbarLink}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#f1f5f9",
+                color: "#0f172a",
+                borderColor: "#cbd5e1",
+                marginTop: "0.5rem",
+              }}
+            >
+              + Add Navbar Link
+            </button>
+            <button
+              onClick={onAddNavbarDropdown}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#f1f5f9",
+                color: "#0f172a",
+                borderColor: "#cbd5e1",
+                marginTop: "0.5rem",
+              }}
+            >
+              + Add Navbar Dropdown
+            </button>
+          </>
         )}
+
+        {selectedElement.id.includes("text-l") &&
+          selectedElement.type === "text" && (
+            <button
+              onClick={onTurnIntoDropdown}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#e0e7ff",
+                color: "#4f46e5",
+                borderColor: "#c7d2fe",
+                marginTop: "0.5rem",
+              }}
+            >
+              Turn into Dropdown ▾
+            </button>
+          )}
       </div>
 
       {(isText || isImage) && (
