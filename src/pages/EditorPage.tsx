@@ -34,31 +34,39 @@ export default function EditorPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const findElement = (
+  const findElementAndParent = (
     pagesList: PageSchema[],
     id: string,
-  ): ElementSchema | null => {
+  ): { element: ElementSchema | null; parent: ElementSchema | null } => {
+    let element: ElementSchema | null = null;
+    let parent: ElementSchema | null = null;
+
     const searchRecursive = (
       elements: ElementSchema[],
-    ): ElementSchema | null => {
+      currentParent: ElementSchema | null,
+    ): boolean => {
       for (const el of elements) {
-        if (el.id === id) return el;
+        if (el.id === id) {
+          element = el;
+          parent = currentParent;
+          return true;
+        }
         if (el.children) {
-          const found = searchRecursive(el.children);
-          if (found) return found;
+          if (searchRecursive(el.children, el)) return true;
         }
       }
-      return null;
+      return false;
     };
     for (const page of pagesList) {
-      const found = searchRecursive(page.elements);
-      if (found) return found;
+      if (searchRecursive(page.elements, null)) break;
     }
-    return null;
+    return { element, parent };
   };
 
-  const selectedElement =
-    selectedIds.length === 1 ? findElement(pages, selectedIds[0]) : null;
+  const { element: selectedElement, parent: parentElement } =
+    selectedIds.length === 1
+      ? findElementAndParent(pages, selectedIds[0])
+      : { element: null, parent: null };
 
   const updateElementStyle = (id: string, property: string, value: string) => {
     setPages((prev) => {
@@ -213,10 +221,32 @@ export default function EditorPage() {
 
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
+
+    const idsToDelete = new Set(selectedIds);
+
+    const checkAndAddDropdownParent = (
+      elements: ElementSchema[],
+      parent: ElementSchema | null,
+    ) => {
+      for (const el of elements) {
+        if (
+          selectedIds.includes(el.id) &&
+          parent &&
+          parent.dropdownMode !== undefined
+        ) {
+          idsToDelete.add(parent.id);
+        }
+        if (el.children) {
+          checkAndAddDropdownParent(el.children, el);
+        }
+      }
+    };
+    pages.forEach((page) => checkAndAddDropdownParent(page.elements, null));
+
     setPages((prev) => {
       const delRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements
-          .filter((el) => !selectedIds.includes(el.id))
+          .filter((el) => !idsToDelete.has(el.id))
           .map((el) => ({
             ...el,
             children: el.children ? delRec(el.children) : undefined,
@@ -271,11 +301,13 @@ export default function EditorPage() {
     const newDropdown: ElementSchema = {
       id: `dropdown-${Date.now()}`,
       type: "container",
+      dropdownMode: "hover",
       styles: {
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
         position: "relative",
         cursor: "pointer",
+        height: "100%",
       },
       children: [
         {
@@ -294,15 +326,16 @@ export default function EditorPage() {
           styles: {
             position: "absolute",
             top: "100%",
-            left: "0",
+            left: "50%",
+            transform: "translateX(-50%)",
             backgroundColor: "#ffffff",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            padding: "0.5rem 1rem",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            padding: "0.5rem 0",
             display: "flex",
             flexDirection: "column",
-            gap: "0.5rem",
             minWidth: "150px",
-            zIndex: "50",
+            zIndex: "999",
             borderRadius: "8px",
             marginTop: "0.5rem",
           },
@@ -311,13 +344,25 @@ export default function EditorPage() {
               id: `text-l-${Date.now()}-1`,
               type: "text",
               content: "Item 1",
-              styles: { margin: "0", color: "#64748b", cursor: "pointer" },
+              styles: {
+                margin: "0",
+                padding: "0.5rem 1.25rem",
+                color: "#64748b",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+              },
             },
             {
               id: `text-l-${Date.now()}-2`,
               type: "text",
               content: "Item 2",
-              styles: { margin: "0", color: "#64748b", cursor: "pointer" },
+              styles: {
+                margin: "0",
+                padding: "0.5rem 1.25rem",
+                color: "#64748b",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+              },
             },
           ],
         },
@@ -358,17 +403,20 @@ export default function EditorPage() {
             return {
               id: el.id, // keep the same ID so selection highlights remain
               type: "container",
+              dropdownMode: "hover",
               styles: {
                 display: "flex",
-                flexDirection: "column",
+                alignItems: "center",
                 position: "relative",
                 cursor: "pointer",
+                height: "100%",
               },
               children: [
                 {
                   ...el,
                   id: `dropdown-trigger-${Date.now()}`,
                   content: `${el.content || "Link"} ▾`,
+                  styles: { ...el.styles, margin: "0", padding: "0" },
                 },
                 {
                   id: `dropdown-menu-${Date.now()}`,
@@ -376,15 +424,16 @@ export default function EditorPage() {
                   styles: {
                     position: "absolute",
                     top: "100%",
-                    left: "0",
+                    left: "50%",
+                    transform: "translateX(-50%)",
                     backgroundColor: "#ffffff",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    padding: "0.5rem 1rem",
+                    boxShadow:
+                      "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                    padding: "0.5rem 0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "0.5rem",
                     minWidth: "150px",
-                    zIndex: "50",
+                    zIndex: "999",
                     borderRadius: "8px",
                     marginTop: "0.5rem",
                   },
@@ -395,8 +444,10 @@ export default function EditorPage() {
                       content: "Sub Item 1",
                       styles: {
                         margin: "0",
+                        padding: "0.5rem 1.25rem",
                         color: "#64748b",
                         cursor: "pointer",
+                        fontSize: "0.95rem",
                       },
                     },
                     {
@@ -405,8 +456,10 @@ export default function EditorPage() {
                       content: "Sub Item 2",
                       styles: {
                         margin: "0",
+                        padding: "0.5rem 1.25rem",
                         color: "#64748b",
                         cursor: "pointer",
+                        fontSize: "0.95rem",
                       },
                     },
                   ],
@@ -423,6 +476,41 @@ export default function EditorPage() {
         elements: updateRec(page.elements),
       }));
     });
+  };
+
+  const handleRemoveDropdown = (
+    dropdownContainerId: string,
+    triggerId: string,
+  ) => {
+    setPages((prev) => {
+      const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        const result: ElementSchema[] = [];
+        for (const el of elements) {
+          if (el.id === dropdownContainerId && el.children) {
+            const trigger = el.children.find((c) => c.id === triggerId);
+            if (trigger) {
+              result.push({
+                ...trigger,
+                id: dropdownContainerId,
+                content: trigger.content?.replace(" ▾", "") || "Link",
+              });
+              continue;
+            }
+          }
+          if (el.children) {
+            result.push({ ...el, children: updateRec(el.children) });
+          } else {
+            result.push(el);
+          }
+        }
+        return result;
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: updateRec(page.elements),
+      }));
+    });
+    setSelectedIds([dropdownContainerId]);
   };
 
   const handleSelectElement = (id: string, e: React.MouseEvent) => {
@@ -445,7 +533,7 @@ export default function EditorPage() {
     setIsDraggingOver(null);
     const existingId = e.dataTransfer.getData("existing-id");
     if (!existingId) return;
-    const elToMove = findElement(pages, existingId);
+    const elToMove = findElementAndParent(pages, existingId).element;
     if (!elToMove) return;
 
     setPages((prev) => {
@@ -465,7 +553,7 @@ export default function EditorPage() {
     setIsDraggingOver(null);
     const existingId = e.dataTransfer.getData("existing-id");
     if (!existingId) return;
-    const elementToAdd = findElement(pages, existingId);
+    const elementToAdd = findElementAndParent(pages, existingId).element;
     if (!elementToAdd) return;
 
     setPages((prev) => {
@@ -522,6 +610,7 @@ export default function EditorPage() {
         />
         <EditorInspector
           selectedElement={selectedElement}
+          parentElement={parentElement}
           selectedIdsCount={selectedIds.length}
           onUpdateStyle={updateElementStyle}
           onUpdateProp={updateElementProp}
@@ -529,6 +618,7 @@ export default function EditorPage() {
           onAddNavbarLink={handleAddNavbarLink}
           onAddNavbarDropdown={handleAddNavbarDropdown}
           onTurnIntoDropdown={handleTurnIntoDropdown}
+          onRemoveDropdown={handleRemoveDropdown}
         />
       </div>
 
@@ -558,6 +648,9 @@ export default function EditorPage() {
               maxWidth: "800px",
               boxShadow:
                 "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -567,6 +660,7 @@ export default function EditorPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: "1.5rem",
+                flexShrink: 0,
               }}
             >
               <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#0f172a" }}>
@@ -591,6 +685,8 @@ export default function EditorPage() {
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: "1rem",
+                overflowY: "auto",
+                paddingRight: "0.5rem",
               }}
             >
               {NAVBAR_TEMPLATES.map((template) => (
@@ -602,12 +698,11 @@ export default function EditorPage() {
                   style={{
                     border: "1px solid #e2e8f0",
                     borderRadius: "8px",
-                    padding: "1.5rem",
+                    overflow: "hidden",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "0.5rem",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = "#4f46e5";
@@ -619,16 +714,49 @@ export default function EditorPage() {
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  <h3
-                    style={{ margin: 0, fontSize: "1.1rem", color: "#0f172a" }}
+                  {/* Placeholder for Navbar Image */}
+                  <div
+                    style={{
+                      height: "120px",
+                      backgroundColor: "#f8fafc",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#94a3b8",
+                      fontSize: "0.85rem",
+                      borderBottom: "1px solid #e2e8f0",
+                    }}
                   >
-                    {template.name}
-                  </h3>
-                  <p
-                    style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}
+                    {/* You can replace this text with an <img src={template.image} /> when ready */}
+                    [ Navbar Preview Image ]
+                  </div>
+                  <div
+                    style={{
+                      padding: "1rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                    }}
                   >
-                    {template.description}
-                  </p>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "1.1rem",
+                        color: "#0f172a",
+                      }}
+                    >
+                      {template.name}
+                    </h3>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "0.9rem",
+                        color: "#64748b",
+                      }}
+                    >
+                      {template.description}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

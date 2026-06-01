@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 export type ElementSchema = {
   id: string;
@@ -16,6 +16,7 @@ export type ElementSchema = {
   content?: string;
   src?: string;
   children?: ElementSchema[];
+  dropdownMode?: "hover" | "click";
 };
 
 interface TemplateRendererProps {
@@ -35,27 +36,68 @@ export const TemplateRenderer = ({
   onDrop,
   onUpdateProp,
 }: TemplateRendererProps) => {
+  const [hoveredIds, setHoveredIds] = useState<string[]>([]);
+  const [clickedIds, setClickedIds] = useState<string[]>([]);
+
+  const isDescendantSelected = (element: ElementSchema): boolean => {
+    return (
+      selectedIds.includes(element.id) ||
+      !!element.children?.some(isDescendantSelected)
+    );
+  };
+
   const renderElement = (el: ElementSchema) => {
     const isSelected = selectedIds.includes(el.id);
     const isTextElement =
       el.type === "heading" || el.type === "text" || el.type === "button";
     const canEdit = isSelected && isTextElement;
 
+    const isDropdownContainer = !!el.dropdownMode;
+    const forceShow = isDescendantSelected(el);
+    const isHovered = hoveredIds.includes(el.id);
+    const isClicked = clickedIds.includes(el.id);
+    const isVisible =
+      forceShow || (el.dropdownMode === "hover" ? isHovered : isClicked);
+
     const mergedStyles: React.CSSProperties = {
+      position: "relative",
       ...el.styles,
       boxShadow: isSelected
         ? "inset 0 0 0 2px #4f46e5, 0 4px 12px rgba(79, 70, 229, 0.15)"
-        : "none",
-      cursor: canEdit ? "text" : onSelect ? "pointer" : "default",
-      transition: "all 0.15s ease-in-out",
-      position: "relative",
+        : el.styles?.boxShadow || "none",
+      cursor: canEdit
+        ? "text"
+        : onSelect
+          ? "pointer"
+          : el.styles?.cursor || "default",
+      transition: el.styles?.transition || "all 0.15s ease-in-out",
       outline: "none",
     };
 
     const handleClick = (e: React.MouseEvent) => {
+      if (isDropdownContainer && el.dropdownMode === "click") {
+        e.stopPropagation();
+        setClickedIds((prev) =>
+          prev.includes(el.id)
+            ? prev.filter((id) => id !== el.id)
+            : [...prev, el.id],
+        );
+      }
       if (onSelect) {
         e.stopPropagation();
         onSelect(el.id, e);
+      }
+    };
+
+    const handleMouseEnter = () => {
+      if (isDropdownContainer && el.dropdownMode === "hover") {
+        setHoveredIds((prev) => [...prev, el.id]);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (isDropdownContainer && el.dropdownMode === "hover") {
+        setHoveredIds((prev) => prev.filter((id) => id !== el.id));
       }
     };
 
@@ -87,6 +129,8 @@ export const TemplateRenderer = ({
     const commonProps = {
       key: el.id,
       onClick: handleClick,
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
       draggable: !!onDragStart && !canEdit,
       onDragStart: handleDragStart,
       onDragOver: handleDragOver,
@@ -102,13 +146,20 @@ export const TemplateRenderer = ({
         }
       : {};
 
+    const renderChildren = () => {
+      return el.children?.map((child, index) => {
+        if (isDropdownContainer && index === 1) {
+          if (!isVisible) return null;
+        }
+        return renderElement(child);
+      });
+    };
+
     switch (el.type) {
       case "section":
-        return (
-          <section {...commonProps}>{el.children?.map(renderElement)}</section>
-        );
+        return <section {...commonProps}>{renderChildren()}</section>;
       case "container":
-        return <div {...commonProps}>{el.children?.map(renderElement)}</div>;
+        return <div {...commonProps}>{renderChildren()}</div>;
       case "heading":
         return (
           <h1 {...commonProps} {...textEditableProps}>
