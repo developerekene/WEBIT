@@ -55,20 +55,28 @@ interface ExtendedElement extends ElementSchema {
 
 interface EditorInspectorProps {
   selectedElement: ElementSchema | null;
+  parentElement?: ElementSchema | null;
   selectedIdsCount: number;
   onUpdateStyle: (id: string, property: string, value: string) => void;
   onUpdateProp: (id: string, property: string, value: unknown) => void;
   onDeleteSelected: () => void;
   onAddNavbarLink: () => void;
+  onAddNavbarDropdown: () => void;
+  onTurnIntoDropdown: () => void;
+  onRemoveDropdown?: (dropdownId: string, triggerId: string) => void;
 }
 
 export default function EditorInspector({
   selectedElement,
+  parentElement,
   selectedIdsCount,
   onUpdateStyle,
   onUpdateProp,
   onDeleteSelected,
   onAddNavbarLink,
+  onAddNavbarDropdown,
+  onTurnIntoDropdown,
+  onRemoveDropdown,
 }: EditorInspectorProps) {
   const [customCSS, setCustomCSS] = useState("");
   const [prevId, setPrevId] = useState<string | undefined>(selectedElement?.id);
@@ -273,6 +281,15 @@ export default function EditorInspector({
   const hasBackground =
     type === "section" || type === "container" || type === "button";
 
+  const isDropdownContainer = selectedElement.dropdownMode !== undefined;
+  const isInsideDropdown = parentElement?.dropdownMode !== undefined;
+  const dropdownElement = isDropdownContainer
+    ? selectedElement
+    : isInsideDropdown
+      ? parentElement
+      : null;
+  const triggerId = dropdownElement?.children?.[0]?.id || null;
+
   return (
     <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
       <div className={styles.panelHeader}>Inspector</div>
@@ -297,19 +314,97 @@ export default function EditorInspector({
           selectedElement.id.includes("text-l") ||
           selectedElement.id.includes("group") ||
           selectedElement.id.includes("utils")) && (
-          <button
-            onClick={onAddNavbarLink}
-            className={styles.btnSecondary}
-            style={{
-              width: "100%",
-              background: "#f1f5f9",
-              color: "#0f172a",
-              borderColor: "#cbd5e1",
-              marginTop: "0.5rem",
-            }}
-          >
-            + Add Navbar Link
-          </button>
+          <>
+            <button
+              onClick={onAddNavbarLink}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#f1f5f9",
+                color: "#0f172a",
+                borderColor: "#cbd5e1",
+                marginTop: "0.5rem",
+              }}
+            >
+              + Add Navbar Link
+            </button>
+            <button
+              onClick={onAddNavbarDropdown}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#f1f5f9",
+                color: "#0f172a",
+                borderColor: "#cbd5e1",
+                marginTop: "0.5rem",
+              }}
+            >
+              + Add Navbar Dropdown
+            </button>
+          </>
+        )}
+
+        {selectedElement.id.includes("text-l") &&
+          selectedElement.type === "text" &&
+          !dropdownElement && (
+            <button
+              onClick={onTurnIntoDropdown}
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#e0e7ff",
+                color: "#4f46e5",
+                borderColor: "#c7d2fe",
+                marginTop: "0.5rem",
+              }}
+            >
+              Turn into Dropdown ▾
+            </button>
+          )}
+
+        {dropdownElement && (
+          <div style={{ marginTop: "1rem" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Dropdown Reveal Mode
+            </label>
+            <select
+              value={dropdownElement.dropdownMode}
+              onChange={(e) =>
+                onUpdateProp(dropdownElement.id, "dropdownMode", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+                marginBottom: "8px",
+              }}
+            >
+              <option value="hover">Hover to Reveal</option>
+              <option value="click">Click to Reveal</option>
+            </select>
+            {onRemoveDropdown && triggerId && (
+              <button
+                onClick={() => onRemoveDropdown(dropdownElement.id, triggerId)}
+                className={styles.btnSecondary}
+                style={{
+                  width: "100%",
+                  background: "#fee2e2",
+                  color: "#ef4444",
+                  borderColor: "#f87171",
+                }}
+              >
+                Remove Dropdown
+              </button>
+            )}
+          </div>
         )}
       </div>
 
