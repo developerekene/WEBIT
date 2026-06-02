@@ -10,6 +10,7 @@ import EditorCanvas, {
   type PageSchema,
 } from "../components/editor/EditorCanvas";
 import { NAVBAR_TEMPLATES } from "../templates/NavbarTemplates";
+import { HERO_TEMPLATES } from "../templates/heroTemplates";
 
 type ViewMode = "desktop" | "tablet" | "mobile";
 
@@ -401,7 +402,7 @@ export default function EditorPage() {
         return elements.map((el) => {
           if (el.id === targetId && el.type === "text") {
             return {
-              id: el.id, // keep the same ID so selection highlights remain
+              id: el.id,
               type: "container",
               dropdownMode: "hover",
               styles: {
@@ -622,7 +623,7 @@ export default function EditorPage() {
         />
       </div>
 
-      {modalType === "navbar" && (
+      {(modalType === "navbar" || modalType === "hero") && (
         <div
           style={{
             position: "fixed",
@@ -664,7 +665,7 @@ export default function EditorPage() {
               }}
             >
               <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#0f172a" }}>
-                Select a Navbar Template
+                Select a {modalType === "navbar" ? "Navbar" : "Hero"} Template
               </h2>
               <button
                 onClick={() => setModalType(null)}
@@ -689,76 +690,79 @@ export default function EditorPage() {
                 paddingRight: "0.5rem",
               }}
             >
-              {NAVBAR_TEMPLATES.map((template) => (
-                <div
-                  key={template.id}
-                  onClick={() =>
-                    handleAddTemplate(template.getSchema(Date.now()))
-                  }
-                  style={{
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#4f46e5";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#e2e8f0";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  {/* Placeholder for Navbar Image */}
+              {(modalType === "navbar" ? NAVBAR_TEMPLATES : HERO_TEMPLATES).map(
+                (template) => (
                   <div
+                    key={template.id}
+                    onClick={() =>
+                      handleAddTemplate(template.getSchema(Date.now()))
+                    }
                     style={{
-                      height: "120px",
-                      backgroundColor: "#f8fafc",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#94a3b8",
-                      fontSize: "0.85rem",
-                      borderBottom: "1px solid #e2e8f0",
-                    }}
-                  >
-                    {/* You can replace this text with an <img src={template.image} /> when ready */}
-                    [ Navbar Preview Image ]
-                  </div>
-                  <div
-                    style={{
-                      padding: "1rem",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "0.5rem",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#4f46e5";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#e2e8f0";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <h3
+                    {/* Placeholder for Preview Image */}
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: "1.1rem",
-                        color: "#0f172a",
+                        height: "120px",
+                        backgroundColor: "#f8fafc",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#94a3b8",
+                        fontSize: "0.85rem",
+                        borderBottom: "1px solid #e2e8f0",
                       }}
                     >
-                      {template.name}
-                    </h3>
-                    <p
+                      {/* You can replace this text with an <img src={template.image} /> when ready */}
+                      [ {modalType === "navbar" ? "Navbar" : "Hero"} Preview
+                      Image ]
+                    </div>
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: "0.9rem",
-                        color: "#64748b",
+                        padding: "1rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
                       }}
                     >
-                      {template.description}
-                    </p>
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: "1.1rem",
+                          color: "#0f172a",
+                        }}
+                      >
+                        {template.name}
+                      </h3>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.9rem",
+                          color: "#64748b",
+                        }}
+                      >
+                        {template.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
         </div>
