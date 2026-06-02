@@ -65,6 +65,36 @@ export default function EditorSidebar({
             </div>
           </div>
         </div>
+
+        <div
+          className={styles.elementItem}
+          onClick={() => onOpenModal("hero")}
+          style={{
+            cursor: "pointer",
+            gridColumn: "1 / -1",
+            flexDirection: "row",
+            padding: "1rem",
+            justifyContent: "flex-start",
+            gap: "1rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem" }}>🚀</span>
+          <div>
+            <div style={{ color: "#0f172a", fontWeight: "bold" }}>
+              Hero Sections
+            </div>
+            <div
+              style={{
+                fontSize: "0.7rem",
+                fontWeight: "normal",
+                marginTop: "4px",
+              }}
+            >
+              Browse hero templates
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );
