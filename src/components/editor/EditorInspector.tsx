@@ -55,7 +55,6 @@ interface ExtendedElement extends ElementSchema {
 
 interface EditorInspectorProps {
   selectedElement: ElementSchema | null;
-  parentElement?: ElementSchema | null;
   selectedIdsCount: number;
   onUpdateStyle: (id: string, property: string, value: string) => void;
   onUpdateProp: (id: string, property: string, value: unknown) => void;
@@ -63,12 +62,10 @@ interface EditorInspectorProps {
   onAddNavbarLink: () => void;
   onAddNavbarDropdown: () => void;
   onTurnIntoDropdown: () => void;
-  onRemoveDropdown?: (dropdownId: string, triggerId: string) => void;
 }
 
 export default function EditorInspector({
   selectedElement,
-  parentElement,
   selectedIdsCount,
   onUpdateStyle,
   onUpdateProp,
@@ -76,7 +73,6 @@ export default function EditorInspector({
   onAddNavbarLink,
   onAddNavbarDropdown,
   onTurnIntoDropdown,
-  onRemoveDropdown,
 }: EditorInspectorProps) {
   const [customCSS, setCustomCSS] = useState("");
   const [prevId, setPrevId] = useState<string | undefined>(selectedElement?.id);
@@ -274,21 +270,26 @@ export default function EditorInspector({
     setTargetFont("");
   };
 
+  const handleCarouselUpdate = (key: string, value: any) => {
+    const currentSettings = selectedElement.carouselSettings || {
+      images: [],
+      arrows: true,
+      indicators: true,
+      animationMode: "fade",
+    };
+    onUpdateProp(selectedElement.id, "carouselSettings", {
+      ...currentSettings,
+      [key]: value,
+    });
+  };
+
   const type = selectedElement.type;
   const isLayout = type === "section" || type === "container";
+  const isCarousel = type === "carousel";
   const isText = type === "text" || type === "heading" || type === "button";
   const isImage = type === "image";
   const hasBackground =
-    type === "section" || type === "container" || type === "button";
-
-  const isDropdownContainer = selectedElement.dropdownMode !== undefined;
-  const isInsideDropdown = parentElement?.dropdownMode !== undefined;
-  const dropdownElement = isDropdownContainer
-    ? selectedElement
-    : isInsideDropdown
-      ? parentElement
-      : null;
-  const triggerId = dropdownElement?.children?.[0]?.id || null;
+    type === "section" || type === "container" || type === "button" || type === "carousel";
 
   return (
     <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
@@ -345,8 +346,7 @@ export default function EditorInspector({
         )}
 
         {selectedElement.id.includes("text-l") &&
-          selectedElement.type === "text" &&
-          !dropdownElement && (
+          selectedElement.type === "text" && (
             <button
               onClick={onTurnIntoDropdown}
               className={styles.btnSecondary}
@@ -361,52 +361,95 @@ export default function EditorInspector({
               Turn into Dropdown ▾
             </button>
           )}
+      </div>
 
-        {dropdownElement && (
-          <div style={{ marginTop: "1rem" }}>
-            <label
-              style={{
-                fontSize: "0.8rem",
-                color: "#64748b",
-                display: "block",
-                marginBottom: "4px",
-              }}
-            >
-              Dropdown Reveal Mode
+      {isCarousel && (
+        <div className={styles.settingsGroup}>
+          <h4>Carousel Settings</h4>
+          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+            <input
+              type="checkbox"
+              checked={selectedElement.carouselSettings?.arrows ?? true}
+              onChange={(e) => handleCarouselUpdate("arrows", e.target.checked)}
+            />
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Arrows</label>
+          </div>
+          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+            <input
+              type="checkbox"
+              checked={selectedElement.carouselSettings?.indicators ?? true}
+              onChange={(e) => handleCarouselUpdate("indicators", e.target.checked)}
+            />
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Indicators</label>
+          </div>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+              Animation Mode
             </label>
             <select
-              value={dropdownElement.dropdownMode}
-              onChange={(e) =>
-                onUpdateProp(dropdownElement.id, "dropdownMode", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #e2e8f0",
-                marginBottom: "8px",
-              }}
+              value={selectedElement.carouselSettings?.animationMode || "fade"}
+              onChange={(e) => handleCarouselUpdate("animationMode", e.target.value)}
+              style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
             >
-              <option value="hover">Hover to Reveal</option>
-              <option value="click">Click to Reveal</option>
+              <option value="fade">Fade</option>
+              <option value="slide">Slide</option>
+              <option value="wipe">Wipe</option>
             </select>
-            {onRemoveDropdown && triggerId && (
-              <button
-                onClick={() => onRemoveDropdown(dropdownElement.id, triggerId)}
-                className={styles.btnSecondary}
-                style={{
-                  width: "100%",
-                  background: "#fee2e2",
-                  color: "#ef4444",
-                  borderColor: "#f87171",
-                }}
-              >
-                Remove Dropdown
-              </button>
-            )}
           </div>
-        )}
-      </div>
+          <div>
+            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+              Carousel Images
+            </label>
+            {(selectedElement.carouselSettings?.images || []).map((img, idx) => (
+              <div key={idx} style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
+                <input
+                  type="text"
+                  value={img}
+                  placeholder="https://..."
+                  onChange={(e) => {
+                    const newImgs = [...(selectedElement.carouselSettings?.images || [])];
+                    newImgs[idx] = e.target.value;
+                    handleCarouselUpdate("images", newImgs);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #e2e8f0",
+                    fontSize: "0.75rem",
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const newImgs = (selectedElement.carouselSettings?.images || []).filter((_, i) => i !== idx);
+                    handleCarouselUpdate("images", newImgs);
+                  }}
+                  style={{
+                    background: "#fee2e2",
+                    color: "#ef4444",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "0 8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                const newImgs = [...(selectedElement.carouselSettings?.images || []), ""];
+                handleCarouselUpdate("images", newImgs);
+              }}
+              className={styles.btnSecondary}
+              style={{ width: "100%", fontSize: "0.8rem", padding: "6px" }}
+            >
+              + Add Image
+            </button>
+          </div>
+        </div>
+      )}
 
       {(isText || isImage) && (
         <div className={styles.settingsGroup}>
@@ -921,7 +964,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "flexDirection",
-                  e.target.value,
+                  e.target.value
                 )
               }
               style={{
@@ -981,7 +1024,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "justifyContent",
-                  e.target.value,
+                  e.target.value
                 )
               }
               style={{
@@ -1030,6 +1073,34 @@ export default function EditorInspector({
       {hasBackground && (
         <div className={styles.settingsGroup}>
           <h4>Background</h4>
+          {/* Background Image Setup */}
+          {!isCarousel && (
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+                Background Image URL
+              </label>
+              <input
+                type="text"
+                value={(() => {
+                  const bgImageRaw = String(selectedElement.styles?.backgroundImage || "");
+                  return bgImageRaw.includes("url") ? bgImageRaw.match(/url\(['"]?(.*?)['"]?\)/)?.[1] || "" : "";
+                })()}
+                placeholder="https://..."
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onUpdateStyle(selectedElement.id, "backgroundImage", val ? `url('${val}')` : "none");
+                  if (val && !selectedElement.styles?.backgroundSize) {
+                    onUpdateStyle(selectedElement.id, "backgroundSize", "cover");
+                  }
+                  if (val && !selectedElement.styles?.backgroundPosition) {
+                    onUpdateStyle(selectedElement.id, "backgroundPosition", "center");
+                  }
+                }}
+                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+              />
+            </div>
+          )}
+
           <select
             value={bgMode}
             onChange={(e) => {
