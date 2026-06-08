@@ -5,6 +5,7 @@ export const NAVBAR_TEMPLATES = [
     id: "standard",
     name: "Standard Navbar",
     description: "Logo left, links center, button right",
+    image: "/public/templateImages/navbars/Standard Navbar.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -101,6 +102,8 @@ export const NAVBAR_TEMPLATES = [
     id: "centered",
     name: "Centered Logo",
     description: "Links left, logo center, button right",
+    image: "/public/templateImages/navbars/Centered Logo.png",
+
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -205,6 +208,7 @@ export const NAVBAR_TEMPLATES = [
     id: "dark",
     name: "Dark Minimal",
     description: "Dark background, simple layout",
+    image: "/public/templateImages/navbars/Dark Minimal.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -286,6 +290,7 @@ export const NAVBAR_TEMPLATES = [
     id: "right-aligned",
     name: "Right Aligned",
     description: "Logo on the left, all navigation grouped on the right",
+    image: "/public/templateImages/navbars/Right Aligned.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -371,6 +376,7 @@ export const NAVBAR_TEMPLATES = [
     id: "floating-card",
     name: "Floating Card",
     description: "Rounded, elevated navbar that sits inside the page",
+    image: "/public/templateImages/navbars/Floating Card.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -458,6 +464,7 @@ export const NAVBAR_TEMPLATES = [
     id: "ecommerce",
     name: "E-Commerce",
     description: "Includes a search bar placeholder and utility links",
+    image: "/public/templateImages/navbars/E-Commerce.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
@@ -550,6 +557,7 @@ export const NAVBAR_TEMPLATES = [
     id: "two-tier",
     name: "Two-Tier Navigation",
     description: "Top utility bar with main navigation below",
+    image: "/public/templateImages/navbars/Two-Tier Navigation.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-wrapper-${baseId}`,
       type: "container",
@@ -734,108 +742,109 @@ export const NAVBAR_TEMPLATES = [
       ],
     }),
   },
-  {
-    id: "transparent",
-    name: "Transparent Hero",
-    description: "Designed to sit directly over images or hero backgrounds",
-    getSchema: (baseId: number): ElementSchema => ({
-      id: `container-nav-${baseId}`,
-      type: "container",
-      styles: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1.5rem 3rem",
-        background: "transparent",
-        width: "100%",
-        margin: "0",
-      },
-      children: [
-        {
-          id: `heading-logo-${baseId}`,
-          type: "heading",
-          content: "WANDER.",
-          styles: {
-            margin: "0",
-            fontSize: "1.5rem",
-            fontWeight: "700",
-            color: "#ffffff",
-            letterSpacing: "1px",
-          },
-        },
-        {
-          id: `container-links-${baseId}`,
-          type: "container",
-          styles: {
-            display: "flex",
-            flexDirection: "row",
-            gap: "2.5rem",
-            alignItems: "center",
-            padding: "0",
-            margin: "0",
-            background: "transparent",
-          },
-          children: [
-            {
-              id: `text-l1-${baseId}`,
-              type: "text",
-              content: "Destinations",
-              styles: {
-                margin: "0",
-                fontWeight: "500",
-                cursor: "pointer",
-                color: "#ffffff",
-              },
-            },
-            {
-              id: `text-l2-${baseId}`,
-              type: "text",
-              content: "Stories",
-              styles: {
-                margin: "0",
-                fontWeight: "500",
-                cursor: "pointer",
-                color: "#ffffff",
-              },
-            },
-            {
-              id: `text-l3-${baseId}`,
-              type: "text",
-              content: "About",
-              styles: {
-                margin: "0",
-                fontWeight: "500",
-                cursor: "pointer",
-                color: "#ffffff",
-              },
-            },
-          ],
-        },
-        {
-          id: `button-cta-${baseId}`,
-          type: "button",
-          content: "Book Now",
-          styles: {
-            padding: "10px 24px",
-            background: "rgba(255, 255, 255, 0.2)",
-            color: "#ffffff",
-            border: "1px solid #ffffff",
-            borderRadius: "30px",
-            fontWeight: "600",
-            cursor: "pointer",
-            margin: "0",
-            backdropFilter: "blur(4px)",
-          },
-        },
-      ],
-    }),
-  },
+  // {
+  //   id: "transparent",
+  //   name: "Transparent Hero",
+  //   description: "Designed to sit directly over images or hero backgrounds",
+  //   getSchema: (baseId: number): ElementSchema => ({
+  //     id: `container-nav-${baseId}`,
+  //     type: "container",
+  //     styles: {
+  //       display: "flex",
+  //       flexDirection: "row",
+  //       justifyContent: "space-between",
+  //       alignItems: "center",
+  //       padding: "1.5rem 3rem",
+  //       background: "transparent",
+  //       width: "100%",
+  //       margin: "0",
+  //     },
+  //     children: [
+  //       {
+  //         id: `heading-logo-${baseId}`,
+  //         type: "heading",
+  //         content: "WANDER.",
+  //         styles: {
+  //           margin: "0",
+  //           fontSize: "1.5rem",
+  //           fontWeight: "700",
+  //           color: "#ffffff",
+  //           letterSpacing: "1px",
+  //         },
+  //       },
+  //       {
+  //         id: `container-links-${baseId}`,
+  //         type: "container",
+  //         styles: {
+  //           display: "flex",
+  //           flexDirection: "row",
+  //           gap: "2.5rem",
+  //           alignItems: "center",
+  //           padding: "0",
+  //           margin: "0",
+  //           background: "transparent",
+  //         },
+  //         children: [
+  //           {
+  //             id: `text-l1-${baseId}`,
+  //             type: "text",
+  //             content: "Destinations",
+  //             styles: {
+  //               margin: "0",
+  //               fontWeight: "500",
+  //               cursor: "pointer",
+  //               color: "#ffffff",
+  //             },
+  //           },
+  //           {
+  //             id: `text-l2-${baseId}`,
+  //             type: "text",
+  //             content: "Stories",
+  //             styles: {
+  //               margin: "0",
+  //               fontWeight: "500",
+  //               cursor: "pointer",
+  //               color: "#ffffff",
+  //             },
+  //           },
+  //           {
+  //             id: `text-l3-${baseId}`,
+  //             type: "text",
+  //             content: "About",
+  //             styles: {
+  //               margin: "0",
+  //               fontWeight: "500",
+  //               cursor: "pointer",
+  //               color: "#ffffff",
+  //             },
+  //           },
+  //         ],
+  //       },
+  //       {
+  //         id: `button-cta-${baseId}`,
+  //         type: "button",
+  //         content: "Book Now",
+  //         styles: {
+  //           padding: "10px 24px",
+  //           background: "rgba(255, 255, 255, 0.2)",
+  //           color: "#ffffff",
+  //           border: "1px solid #ffffff",
+  //           borderRadius: "30px",
+  //           fontWeight: "600",
+  //           cursor: "pointer",
+  //           margin: "0",
+  //           backdropFilter: "blur(4px)",
+  //         },
+  //       },
+  //     ],
+  //   }),
+  // },
   {
     id: "dual-cta",
     name: "Dual CTA",
     description:
       "Features secondary and primary action buttons (Log In & Sign Up)",
+    image: "/public/templateImages/navbars/Dual CTA.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `container-nav-${baseId}`,
       type: "container",
