@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import styles from "../../styles/EditorPage.module.css";
 import type { ElementSchema } from "../../engine/TemplateRenderer";
@@ -289,7 +290,10 @@ export default function EditorInspector({
   const isText = type === "text" || type === "heading" || type === "button";
   const isImage = type === "image";
   const hasBackground =
-    type === "section" || type === "container" || type === "button" || type === "carousel";
+    type === "section" ||
+    type === "container" ||
+    type === "button" ||
+    type === "carousel";
 
   return (
     <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
@@ -366,30 +370,64 @@ export default function EditorInspector({
       {isCarousel && (
         <div className={styles.settingsGroup}>
           <h4>Carousel Settings</h4>
-          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              marginBottom: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
             <input
               type="checkbox"
               checked={selectedElement.carouselSettings?.arrows ?? true}
               onChange={(e) => handleCarouselUpdate("arrows", e.target.checked)}
             />
-            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Arrows</label>
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              Show Arrows
+            </label>
           </div>
-          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              marginBottom: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
             <input
               type="checkbox"
               checked={selectedElement.carouselSettings?.indicators ?? true}
-              onChange={(e) => handleCarouselUpdate("indicators", e.target.checked)}
+              onChange={(e) =>
+                handleCarouselUpdate("indicators", e.target.checked)
+              }
             />
-            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Indicators</label>
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              Show Indicators
+            </label>
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
               Animation Mode
             </label>
             <select
               value={selectedElement.carouselSettings?.animationMode || "fade"}
-              onChange={(e) => handleCarouselUpdate("animationMode", e.target.value)}
-              style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+              onChange={(e) =>
+                handleCarouselUpdate("animationMode", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+              }}
             >
               <option value="fade">Fade</option>
               <option value="slide">Slide</option>
@@ -397,49 +435,68 @@ export default function EditorInspector({
             </select>
           </div>
           <div>
-            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
               Carousel Images
             </label>
-            {(selectedElement.carouselSettings?.images || []).map((img, idx) => (
-              <div key={idx} style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
-                <input
-                  type="text"
-                  value={img}
-                  placeholder="https://..."
-                  onChange={(e) => {
-                    const newImgs = [...(selectedElement.carouselSettings?.images || [])];
-                    newImgs[idx] = e.target.value;
-                    handleCarouselUpdate("images", newImgs);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    borderRadius: "6px",
-                    border: "1px solid #e2e8f0",
-                    fontSize: "0.75rem",
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    const newImgs = (selectedElement.carouselSettings?.images || []).filter((_, i) => i !== idx);
-                    handleCarouselUpdate("images", newImgs);
-                  }}
-                  style={{
-                    background: "#fee2e2",
-                    color: "#ef4444",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "0 8px",
-                    cursor: "pointer",
-                  }}
+            {(selectedElement.carouselSettings?.images || []).map(
+              (img, idx) => (
+                <div
+                  key={idx}
+                  style={{ display: "flex", gap: "4px", marginBottom: "8px" }}
                 >
-                  ✕
-                </button>
-              </div>
-            ))}
+                  <input
+                    type="text"
+                    value={img}
+                    placeholder="https://..."
+                    onChange={(e) => {
+                      const newImgs = [
+                        ...(selectedElement.carouselSettings?.images || []),
+                      ];
+                      newImgs[idx] = e.target.value;
+                      handleCarouselUpdate("images", newImgs);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid #e2e8f0",
+                      fontSize: "0.75rem",
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const newImgs = (
+                        selectedElement.carouselSettings?.images || []
+                      ).filter((_, i) => i !== idx);
+                      handleCarouselUpdate("images", newImgs);
+                    }}
+                    style={{
+                      background: "#fee2e2",
+                      color: "#ef4444",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "0 8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ),
+            )}
             <button
               onClick={() => {
-                const newImgs = [...(selectedElement.carouselSettings?.images || []), ""];
+                const newImgs = [
+                  ...(selectedElement.carouselSettings?.images || []),
+                  "",
+                ];
                 handleCarouselUpdate("images", newImgs);
               }}
               className={styles.btnSecondary}
@@ -615,6 +672,136 @@ export default function EditorInspector({
             </select>
           </div>
         )}
+      </div>
+
+      <div className={styles.settingsGroup}>
+        <h4>Position & Layering</h4>
+        <div style={{ marginBottom: "1rem" }}>
+          <label
+            style={{
+              fontSize: "0.8rem",
+              color: "#64748b",
+              display: "block",
+              marginBottom: "4px",
+            }}
+          >
+            Position
+          </label>
+          <select
+            value={selectedElement.styles?.position || "relative"}
+            onChange={(e) =>
+              onUpdateStyle(selectedElement.id, "position", e.target.value)
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <option value="static">Static (Normal Flow)</option>
+            <option value="relative">Relative</option>
+            <option value="absolute">Absolute (Floating)</option>
+            <option value="fixed">Fixed (Stays on Scroll)</option>
+          </select>
+        </div>
+
+        {(selectedElement.styles?.position === "absolute" ||
+          selectedElement.styles?.position === "fixed") && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+              marginBottom: "1rem",
+            }}
+          >
+            <div>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Top
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.top || ""}
+                placeholder="e.g. 0px, 2rem"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "top", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Left
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.left || ""}
+                placeholder="e.g. 50%, 0"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "left", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Transform
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.transform || ""}
+                placeholder="e.g. translateX(-50%)"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "transform", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label
+            style={{
+              fontSize: "0.8rem",
+              color: "#64748b",
+              display: "block",
+              marginBottom: "4px",
+            }}
+          >
+            Z-Index (Layer Order)
+          </label>
+          <input
+            type="number"
+            value={selectedElement.styles?.zIndex || ""}
+            placeholder="e.g., 10, 50, 99"
+            onChange={(e) =>
+              onUpdateStyle(selectedElement.id, "zIndex", e.target.value)
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #e2e8f0",
+            }}
+          />
+        </div>
       </div>
 
       {isText && (
@@ -964,7 +1151,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "flexDirection",
-                  e.target.value
+                  e.target.value,
                 )
               }
               style={{
@@ -1024,7 +1211,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "justifyContent",
-                  e.target.value
+                  e.target.value,
                 )
               }
               style={{
@@ -1076,27 +1263,55 @@ export default function EditorInspector({
           {/* Background Image Setup */}
           {!isCarousel && (
             <div style={{ marginBottom: "1rem" }}>
-              <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+              <label
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#64748b",
+                  display: "block",
+                  marginBottom: "4px",
+                }}
+              >
                 Background Image URL
               </label>
               <input
                 type="text"
                 value={(() => {
-                  const bgImageRaw = String(selectedElement.styles?.backgroundImage || "");
-                  return bgImageRaw.includes("url") ? bgImageRaw.match(/url\(['"]?(.*?)['"]?\)/)?.[1] || "" : "";
+                  const bgImageRaw = String(
+                    selectedElement.styles?.backgroundImage || "",
+                  );
+                  return bgImageRaw.includes("url")
+                    ? bgImageRaw.match(/url\(['"]?(.*?)['"]?\)/)?.[1] || ""
+                    : "";
                 })()}
                 placeholder="https://..."
                 onChange={(e) => {
                   const val = e.target.value;
-                  onUpdateStyle(selectedElement.id, "backgroundImage", val ? `url('${val}')` : "none");
+                  onUpdateStyle(
+                    selectedElement.id,
+                    "backgroundImage",
+                    val ? `url('${val}')` : "none",
+                  );
                   if (val && !selectedElement.styles?.backgroundSize) {
-                    onUpdateStyle(selectedElement.id, "backgroundSize", "cover");
+                    onUpdateStyle(
+                      selectedElement.id,
+                      "backgroundSize",
+                      "cover",
+                    );
                   }
                   if (val && !selectedElement.styles?.backgroundPosition) {
-                    onUpdateStyle(selectedElement.id, "backgroundPosition", "center");
+                    onUpdateStyle(
+                      selectedElement.id,
+                      "backgroundPosition",
+                      "center",
+                    );
                   }
                 }}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                }}
               />
             </div>
           )}
