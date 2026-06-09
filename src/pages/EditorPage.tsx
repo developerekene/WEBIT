@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
@@ -184,14 +185,17 @@ export default function EditorPage() {
           : undefined,
     };
 
+    const targetPageId = activePageId || pages[0]?.id;
+
     setPages((prev) =>
       prev.map((p) =>
-        p.id === activePageId
+        p.id === targetPageId
           ? { ...p, elements: [...p.elements, newElement] }
           : p,
       ),
     );
     setSelectedIds([newElement.id]);
+    if (!activePageId) setActivePageId(targetPageId);
 
     setTimeout(() => {
       canvasRef.current?.scrollTo({
@@ -202,14 +206,17 @@ export default function EditorPage() {
   };
 
   const handleAddTemplate = (template: ElementSchema) => {
+    const targetPageId = activePageId || pages[0]?.id;
+
     setPages((prev) =>
       prev.map((p) =>
-        p.id === activePageId
+        p.id === targetPageId
           ? { ...p, elements: [...p.elements, template] }
           : p,
       ),
     );
     setSelectedIds([template.id]);
+    if (!activePageId) setActivePageId(targetPageId);
     setModalType(null);
 
     setTimeout(() => {
@@ -582,7 +589,19 @@ export default function EditorPage() {
 
   return (
     <>
-      <div className={styles.editorLayout} onClick={() => setSelectedIds([])}>
+      <div
+        className={styles.editorLayout}
+        onClick={(e) => {
+          setSelectedIds([]);
+          // Only clear the active canvas border if the click was outside the white canvas frame
+          if (
+            e.target instanceof Element &&
+            !e.target.closest(`.${styles.canvasFrame}`)
+          ) {
+            setActivePageId("");
+          }
+        }}
+      >
         <EditorTopBar viewMode={viewMode} setViewMode={setViewMode} />
         <EditorSidebar
           onAddElement={handleAddSidebarElement}
@@ -729,9 +748,22 @@ export default function EditorPage() {
                         borderBottom: "1px solid #e2e8f0",
                       }}
                     >
-                      {/* You can replace this text with an <img src={template.image} /> when ready */}
-                      [ {modalType === "navbar" ? "Navbar" : "Hero"} Preview
-                      Image ]
+                      {(template as any).image ? (
+                        <img
+                          src={(template as any).image}
+                          alt={template.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
+                      ) : (
+                        <span>
+                          [ {modalType === "navbar" ? "Navbar" : "Hero"} Preview
+                          Image ]
+                        </span>
+                      )}
                     </div>
                     <div
                       style={{
