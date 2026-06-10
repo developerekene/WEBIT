@@ -5,6 +5,7 @@ export const HERO_TEMPLATES = [
     id: "hero-centered",
     name: "Centered Hero",
     description: "Big bold text, subheadline, and dual CTA buttons centered",
+    image: "/templateImages/heros/Centered Hero.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `section-hero-${baseId}`,
       type: "section",
@@ -100,7 +101,9 @@ export const HERO_TEMPLATES = [
   {
     id: "hero-split",
     name: "Split Image Hero",
-    description: "Text and call-to-action on the left, large image on the right",
+    description:
+      "Text and call-to-action on the left, large image on the right",
+    image: "/templateImages/heros/Split Image Hero.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `section-hero-${baseId}`,
       type: "section",
@@ -191,6 +194,7 @@ export const HERO_TEMPLATES = [
     id: "hero-gradient",
     name: "Gradient Minimal",
     description: "Vibrant gradient background with white text",
+    image: "/templateImages/heros/Gradient Minimal.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `section-hero-${baseId}`,
       type: "section",
@@ -255,12 +259,15 @@ export const HERO_TEMPLATES = [
   {
     id: "hero-image-bg",
     name: "Image Background",
-    description: "Hero section with a full-cover background image and text overlay",
+    description:
+      "Hero section with a full-cover background image and text overlay",
+    image: "/templateImages/heros/Image Background.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `section-hero-imgbg-${baseId}`,
       type: "section",
       styles: {
-        backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         display: "flex",
@@ -293,7 +300,8 @@ export const HERO_TEMPLATES = [
         {
           id: `text-imgbg-${baseId}`,
           type: "text",
-          content: "Your vision, brought to life with precision and creativity.",
+          content:
+            "Your vision, brought to life with precision and creativity.",
           styles: {
             margin: "0",
             fontSize: "1.25rem",
@@ -329,6 +337,7 @@ export const HERO_TEMPLATES = [
     id: "hero-carousel",
     name: "Interactive Carousel",
     description: "Multi-image background slider with animated transitions",
+    image: "/templateImages/heros/Interactive Carousel.png",
     getSchema: (baseId: number): ElementSchema => ({
       id: `section-hero-carousel-${baseId}`,
       type: "carousel",
@@ -370,7 +379,8 @@ export const HERO_TEMPLATES = [
         {
           id: `text-carousel-${baseId}`,
           type: "text",
-          content: "Empower your workflows with an editor that moves as fast as you do.",
+          content:
+            "Empower your workflows with an editor that moves as fast as you do.",
           styles: {
             margin: "0",
             fontSize: "1.25rem",
@@ -391,7 +401,7 @@ export const HERO_TEMPLATES = [
             justifyContent: "center",
             background: "transparent",
             margin: "1rem 0 0 0",
-            padding: "0"
+            padding: "0",
           },
           children: [
             {
@@ -410,9 +420,9 @@ export const HERO_TEMPLATES = [
                 margin: "0",
               },
             },
-          ]
+          ],
         },
       ],
     }),
-  }
+  },
 ];

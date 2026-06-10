@@ -48,6 +48,42 @@ const GOOGLE_FONTS = [
 
 type BackgroundMode = "transparent" | "solid" | "gradient";
 
+function parseColorToHexAndOpacity(color: string): {
+  hex: string;
+  opacity: number;
+} {
+  let hex = "#ffffff";
+  let opacity = 1;
+  if (!color) return { hex, opacity };
+
+  if (color.startsWith("#")) {
+    hex = color.substring(0, 7);
+    if (color.length === 9) {
+      opacity = parseInt(color.substring(7, 9), 16) / 255;
+    }
+  } else if (color.startsWith("rgba") || color.startsWith("rgb")) {
+    const matches = color.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/,
+    );
+    if (matches) {
+      const r = parseInt(matches[1]).toString(16).padStart(2, "0");
+      const g = parseInt(matches[2]).toString(16).padStart(2, "0");
+      const b = parseInt(matches[3]).toString(16).padStart(2, "0");
+      hex = `#${r}${g}${b}`;
+      opacity = matches[4] ? parseFloat(matches[4]) : 1;
+    }
+  }
+  return { hex, opacity };
+}
+
+function hexAndOpacityToRgba(hex: string, opacity: number): string {
+  if (!hex || hex.length < 7) return `rgba(255, 255, 255, ${opacity})`;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 interface ExtendedElement extends ElementSchema {
   src?: string;
   href?: string;
@@ -142,7 +178,7 @@ export default function EditorInspector({
 
   if (bg.includes("gradient")) {
     bgMode = "gradient";
-    const matches = bg.match(/#[a-zA-Z0-9]{6}/g);
+    const matches = bg.match(/(#[a-zA-Z0-9]{6,8}|rgba?\([^)]+\))/g);
     if (matches && matches.length >= 2) {
       [gradientStart, gradientEnd] = matches;
     }
@@ -150,6 +186,9 @@ export default function EditorInspector({
     bgMode = "solid";
     solidColor = bg;
   }
+
+  const { hex: solidHex, opacity: solidOpacity } =
+    parseColorToHexAndOpacity(solidColor);
 
   const applyBackground = (
     mode: BackgroundMode,
@@ -1335,33 +1374,79 @@ export default function EditorInspector({
             <option value="gradient">Gradient</option>
           </select>
           {bgMode === "solid" && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <input
-                type="color"
-                value={solidColor}
-                onChange={(e) =>
-                  applyBackground("solid", e.target.value, gradientEnd)
-                }
-                style={{
-                  cursor: "pointer",
-                  width: "30px",
-                  height: "30px",
-                  border: "none",
-                }}
-              />
-              <input
-                type="text"
-                value={solidColor}
-                onChange={(e) =>
-                  applyBackground("solid", e.target.value, gradientEnd)
-                }
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                }}
-              />
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input
+                  type="color"
+                  value={solidHex}
+                  onChange={(e) =>
+                    applyBackground(
+                      "solid",
+                      hexAndOpacityToRgba(e.target.value, solidOpacity),
+                      gradientEnd,
+                    )
+                  }
+                  style={{
+                    cursor: "pointer",
+                    width: "30px",
+                    height: "30px",
+                    border: "none",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={solidColor}
+                  onChange={(e) =>
+                    applyBackground("solid", e.target.value, gradientEnd)
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #e2e8f0",
+                  }}
+                />
+              </div>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    width: "45px",
+                  }}
+                >
+                  Opacity
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={solidOpacity}
+                  onChange={(e) => {
+                    applyBackground(
+                      "solid",
+                      hexAndOpacityToRgba(solidHex, parseFloat(e.target.value)),
+                      gradientEnd,
+                    );
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    width: "35px",
+                    textAlign: "right",
+                  }}
+                >
+                  {Math.round(solidOpacity * 100)}%
+                </span>
+              </div>
             </div>
           )}
           {bgMode === "gradient" && (
@@ -1373,7 +1458,7 @@ export default function EditorInspector({
               >
                 <input
                   type="color"
-                  value={gradientStart}
+                  value={parseColorToHexAndOpacity(gradientStart).hex}
                   onChange={(e) =>
                     applyBackground("gradient", e.target.value, gradientEnd)
                   }
@@ -1393,7 +1478,7 @@ export default function EditorInspector({
               >
                 <input
                   type="color"
-                  value={gradientEnd}
+                  value={parseColorToHexAndOpacity(gradientEnd).hex}
                   onChange={(e) =>
                     applyBackground("gradient", gradientStart, e.target.value)
                   }
