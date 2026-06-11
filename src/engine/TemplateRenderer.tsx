@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 
 export type ElementSchema = {
@@ -42,7 +43,7 @@ const CarouselBlock = ({
 }: {
   el: ElementSchema;
   commonProps: any;
-  renderElement: (e: ElementSchema) => JSX.Element;
+  renderElement: (e: ElementSchema) => React.ReactNode;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const settings = el.carouselSettings || {
@@ -54,7 +55,9 @@ const CarouselBlock = ({
   const images =
     settings.images.length > 0
       ? settings.images
-      : ["https://placehold.co/1200x600/e2e8f0/64748b?text=Add+Images+in+Inspector"];
+      : [
+          "https://placehold.co/1200x600/e2e8f0/64748b?text=Add+Images+in+Inspector",
+        ];
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,8 +90,8 @@ const CarouselBlock = ({
           idx === currentIndex
             ? "inset(0 0 0 0)"
             : idx < currentIndex
-            ? "inset(0 100% 0 0)"
-            : "inset(0 0 0 100%)",
+              ? "inset(0 100% 0 0)"
+              : "inset(0 0 0 100%)",
         transition: "clip-path 0.6s ease-in-out",
         zIndex: idx === currentIndex ? 2 : 1,
       };
@@ -231,7 +234,8 @@ const CarouselBlock = ({
                 width: "10px",
                 height: "10px",
                 borderRadius: "50%",
-                background: idx === currentIndex ? "#ffffff" : "rgba(255,255,255,0.4)",
+                background:
+                  idx === currentIndex ? "#ffffff" : "rgba(255,255,255,0.4)",
                 cursor: "pointer",
                 transition: "background 0.3s ease",
               }}
@@ -258,13 +262,13 @@ export const TemplateRenderer = ({
     const canEdit = isSelected && isTextElement;
 
     const mergedStyles: React.CSSProperties = {
+      position: "relative",
       ...el.styles,
       boxShadow: isSelected
         ? "inset 0 0 0 2px #4f46e5, 0 4px 12px rgba(79, 70, 229, 0.15)"
-        : "none",
+        : el.styles?.boxShadow || "none",
       cursor: canEdit ? "text" : onSelect ? "pointer" : "default",
       transition: "all 0.15s ease-in-out",
-      position: "relative",
       outline: "none",
     };
 
@@ -326,7 +330,13 @@ export const TemplateRenderer = ({
       case "container":
         return <div {...commonProps}>{el.children?.map(renderElement)}</div>;
       case "carousel":
-        return <CarouselBlock el={el} commonProps={commonProps} renderElement={renderElement} />;
+        return (
+          <CarouselBlock
+            el={el}
+            commonProps={commonProps}
+            renderElement={renderElement}
+          />
+        );
       case "heading":
         return (
           <h1 {...commonProps} {...textEditableProps}>

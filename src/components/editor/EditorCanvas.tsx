@@ -291,6 +291,8 @@ export default function EditorCanvas({
                   pointerEvents: isSpacePressed || isPanning ? "none" : "auto",
                   backgroundColor: "#ffffff",
                   overflow: "hidden",
+                  // FIX: Set the outer container to relative so absolutely positioned children are contained here
+                  position: "relative",
                 }}
                 onDragOver={(e) => onDragOver(page.id, e)}
                 onDragLeave={onDragLeave}
@@ -305,6 +307,8 @@ export default function EditorCanvas({
                       height: "max-content",
                       background: "#ffffff",
                       paddingBottom: "10rem",
+                      // FIX: Set the inner rendering canvas to relative as well
+                      position: "relative",
                     }}
                   >
                     <TemplateRenderer

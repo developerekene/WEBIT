@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import styles from "../../styles/EditorPage.module.css";
 import type { ElementSchema } from "../../engine/TemplateRenderer";
@@ -46,6 +47,42 @@ const GOOGLE_FONTS = [
 ];
 
 type BackgroundMode = "transparent" | "solid" | "gradient";
+
+function parseColorToHexAndOpacity(color: string): {
+  hex: string;
+  opacity: number;
+} {
+  let hex = "#ffffff";
+  let opacity = 1;
+  if (!color) return { hex, opacity };
+
+  if (color.startsWith("#")) {
+    hex = color.substring(0, 7);
+    if (color.length === 9) {
+      opacity = parseInt(color.substring(7, 9), 16) / 255;
+    }
+  } else if (color.startsWith("rgba") || color.startsWith("rgb")) {
+    const matches = color.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/,
+    );
+    if (matches) {
+      const r = parseInt(matches[1]).toString(16).padStart(2, "0");
+      const g = parseInt(matches[2]).toString(16).padStart(2, "0");
+      const b = parseInt(matches[3]).toString(16).padStart(2, "0");
+      hex = `#${r}${g}${b}`;
+      opacity = matches[4] ? parseFloat(matches[4]) : 1;
+    }
+  }
+  return { hex, opacity };
+}
+
+function hexAndOpacityToRgba(hex: string, opacity: number): string {
+  if (!hex || hex.length < 7) return `rgba(255, 255, 255, ${opacity})`;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
 
 interface ExtendedElement extends ElementSchema {
   src?: string;
@@ -141,7 +178,7 @@ export default function EditorInspector({
 
   if (bg.includes("gradient")) {
     bgMode = "gradient";
-    const matches = bg.match(/#[a-zA-Z0-9]{6}/g);
+    const matches = bg.match(/(#[a-zA-Z0-9]{6,8}|rgba?\([^)]+\))/g);
     if (matches && matches.length >= 2) {
       [gradientStart, gradientEnd] = matches;
     }
@@ -149,6 +186,9 @@ export default function EditorInspector({
     bgMode = "solid";
     solidColor = bg;
   }
+
+  const { hex: solidHex, opacity: solidOpacity } =
+    parseColorToHexAndOpacity(solidColor);
 
   const applyBackground = (
     mode: BackgroundMode,
@@ -289,7 +329,10 @@ export default function EditorInspector({
   const isText = type === "text" || type === "heading" || type === "button";
   const isImage = type === "image";
   const hasBackground =
-    type === "section" || type === "container" || type === "button" || type === "carousel";
+    type === "section" ||
+    type === "container" ||
+    type === "button" ||
+    type === "carousel";
 
   return (
     <aside className={styles.rightPanel} onClick={(e) => e.stopPropagation()}>
@@ -366,30 +409,64 @@ export default function EditorInspector({
       {isCarousel && (
         <div className={styles.settingsGroup}>
           <h4>Carousel Settings</h4>
-          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              marginBottom: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
             <input
               type="checkbox"
               checked={selectedElement.carouselSettings?.arrows ?? true}
               onChange={(e) => handleCarouselUpdate("arrows", e.target.checked)}
             />
-            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Arrows</label>
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              Show Arrows
+            </label>
           </div>
-          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              marginBottom: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
             <input
               type="checkbox"
               checked={selectedElement.carouselSettings?.indicators ?? true}
-              onChange={(e) => handleCarouselUpdate("indicators", e.target.checked)}
+              onChange={(e) =>
+                handleCarouselUpdate("indicators", e.target.checked)
+              }
             />
-            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>Show Indicators</label>
+            <label style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              Show Indicators
+            </label>
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
               Animation Mode
             </label>
             <select
               value={selectedElement.carouselSettings?.animationMode || "fade"}
-              onChange={(e) => handleCarouselUpdate("animationMode", e.target.value)}
-              style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+              onChange={(e) =>
+                handleCarouselUpdate("animationMode", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+              }}
             >
               <option value="fade">Fade</option>
               <option value="slide">Slide</option>
@@ -397,49 +474,68 @@ export default function EditorInspector({
             </select>
           </div>
           <div>
-            <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+            <label
+              style={{
+                fontSize: "0.8rem",
+                color: "#64748b",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
               Carousel Images
             </label>
-            {(selectedElement.carouselSettings?.images || []).map((img, idx) => (
-              <div key={idx} style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
-                <input
-                  type="text"
-                  value={img}
-                  placeholder="https://..."
-                  onChange={(e) => {
-                    const newImgs = [...(selectedElement.carouselSettings?.images || [])];
-                    newImgs[idx] = e.target.value;
-                    handleCarouselUpdate("images", newImgs);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    borderRadius: "6px",
-                    border: "1px solid #e2e8f0",
-                    fontSize: "0.75rem",
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    const newImgs = (selectedElement.carouselSettings?.images || []).filter((_, i) => i !== idx);
-                    handleCarouselUpdate("images", newImgs);
-                  }}
-                  style={{
-                    background: "#fee2e2",
-                    color: "#ef4444",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "0 8px",
-                    cursor: "pointer",
-                  }}
+            {(selectedElement.carouselSettings?.images || []).map(
+              (img, idx) => (
+                <div
+                  key={idx}
+                  style={{ display: "flex", gap: "4px", marginBottom: "8px" }}
                 >
-                  ✕
-                </button>
-              </div>
-            ))}
+                  <input
+                    type="text"
+                    value={img}
+                    placeholder="https://..."
+                    onChange={(e) => {
+                      const newImgs = [
+                        ...(selectedElement.carouselSettings?.images || []),
+                      ];
+                      newImgs[idx] = e.target.value;
+                      handleCarouselUpdate("images", newImgs);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid #e2e8f0",
+                      fontSize: "0.75rem",
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const newImgs = (
+                        selectedElement.carouselSettings?.images || []
+                      ).filter((_, i) => i !== idx);
+                      handleCarouselUpdate("images", newImgs);
+                    }}
+                    style={{
+                      background: "#fee2e2",
+                      color: "#ef4444",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "0 8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ),
+            )}
             <button
               onClick={() => {
-                const newImgs = [...(selectedElement.carouselSettings?.images || []), ""];
+                const newImgs = [
+                  ...(selectedElement.carouselSettings?.images || []),
+                  "",
+                ];
                 handleCarouselUpdate("images", newImgs);
               }}
               className={styles.btnSecondary}
@@ -615,6 +711,136 @@ export default function EditorInspector({
             </select>
           </div>
         )}
+      </div>
+
+      <div className={styles.settingsGroup}>
+        <h4>Position & Layering</h4>
+        <div style={{ marginBottom: "1rem" }}>
+          <label
+            style={{
+              fontSize: "0.8rem",
+              color: "#64748b",
+              display: "block",
+              marginBottom: "4px",
+            }}
+          >
+            Position
+          </label>
+          <select
+            value={selectedElement.styles?.position || "relative"}
+            onChange={(e) =>
+              onUpdateStyle(selectedElement.id, "position", e.target.value)
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <option value="static">Static (Normal Flow)</option>
+            <option value="relative">Relative</option>
+            <option value="absolute">Absolute (Floating)</option>
+            <option value="fixed">Fixed (Stays on Scroll)</option>
+          </select>
+        </div>
+
+        {(selectedElement.styles?.position === "absolute" ||
+          selectedElement.styles?.position === "fixed") && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+              marginBottom: "1rem",
+            }}
+          >
+            <div>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Top
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.top || ""}
+                placeholder="e.g. 0px, 2rem"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "top", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Left
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.left || ""}
+                placeholder="e.g. 50%, 0"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "left", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                Transform
+              </label>
+              <input
+                type="text"
+                value={selectedElement.styles?.transform || ""}
+                placeholder="e.g. translateX(-50%)"
+                onChange={(e) =>
+                  onUpdateStyle(selectedElement.id, "transform", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label
+            style={{
+              fontSize: "0.8rem",
+              color: "#64748b",
+              display: "block",
+              marginBottom: "4px",
+            }}
+          >
+            Z-Index (Layer Order)
+          </label>
+          <input
+            type="number"
+            value={selectedElement.styles?.zIndex || ""}
+            placeholder="e.g., 10, 50, 99"
+            onChange={(e) =>
+              onUpdateStyle(selectedElement.id, "zIndex", e.target.value)
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #e2e8f0",
+            }}
+          />
+        </div>
       </div>
 
       {isText && (
@@ -964,7 +1190,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "flexDirection",
-                  e.target.value
+                  e.target.value,
                 )
               }
               style={{
@@ -1024,7 +1250,7 @@ export default function EditorInspector({
                 onUpdateStyle(
                   selectedElement.id,
                   "justifyContent",
-                  e.target.value
+                  e.target.value,
                 )
               }
               style={{
@@ -1076,27 +1302,55 @@ export default function EditorInspector({
           {/* Background Image Setup */}
           {!isCarousel && (
             <div style={{ marginBottom: "1rem" }}>
-              <label style={{ fontSize: "0.8rem", color: "#64748b", display: "block", marginBottom: "4px" }}>
+              <label
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#64748b",
+                  display: "block",
+                  marginBottom: "4px",
+                }}
+              >
                 Background Image URL
               </label>
               <input
                 type="text"
                 value={(() => {
-                  const bgImageRaw = String(selectedElement.styles?.backgroundImage || "");
-                  return bgImageRaw.includes("url") ? bgImageRaw.match(/url\(['"]?(.*?)['"]?\)/)?.[1] || "" : "";
+                  const bgImageRaw = String(
+                    selectedElement.styles?.backgroundImage || "",
+                  );
+                  return bgImageRaw.includes("url")
+                    ? bgImageRaw.match(/url\(['"]?(.*?)['"]?\)/)?.[1] || ""
+                    : "";
                 })()}
                 placeholder="https://..."
                 onChange={(e) => {
                   const val = e.target.value;
-                  onUpdateStyle(selectedElement.id, "backgroundImage", val ? `url('${val}')` : "none");
+                  onUpdateStyle(
+                    selectedElement.id,
+                    "backgroundImage",
+                    val ? `url('${val}')` : "none",
+                  );
                   if (val && !selectedElement.styles?.backgroundSize) {
-                    onUpdateStyle(selectedElement.id, "backgroundSize", "cover");
+                    onUpdateStyle(
+                      selectedElement.id,
+                      "backgroundSize",
+                      "cover",
+                    );
                   }
                   if (val && !selectedElement.styles?.backgroundPosition) {
-                    onUpdateStyle(selectedElement.id, "backgroundPosition", "center");
+                    onUpdateStyle(
+                      selectedElement.id,
+                      "backgroundPosition",
+                      "center",
+                    );
                   }
                 }}
-                style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                }}
               />
             </div>
           )}
@@ -1120,33 +1374,79 @@ export default function EditorInspector({
             <option value="gradient">Gradient</option>
           </select>
           {bgMode === "solid" && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <input
-                type="color"
-                value={solidColor}
-                onChange={(e) =>
-                  applyBackground("solid", e.target.value, gradientEnd)
-                }
-                style={{
-                  cursor: "pointer",
-                  width: "30px",
-                  height: "30px",
-                  border: "none",
-                }}
-              />
-              <input
-                type="text"
-                value={solidColor}
-                onChange={(e) =>
-                  applyBackground("solid", e.target.value, gradientEnd)
-                }
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                }}
-              />
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input
+                  type="color"
+                  value={solidHex}
+                  onChange={(e) =>
+                    applyBackground(
+                      "solid",
+                      hexAndOpacityToRgba(e.target.value, solidOpacity),
+                      gradientEnd,
+                    )
+                  }
+                  style={{
+                    cursor: "pointer",
+                    width: "30px",
+                    height: "30px",
+                    border: "none",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={solidColor}
+                  onChange={(e) =>
+                    applyBackground("solid", e.target.value, gradientEnd)
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #e2e8f0",
+                  }}
+                />
+              </div>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    width: "45px",
+                  }}
+                >
+                  Opacity
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={solidOpacity}
+                  onChange={(e) => {
+                    applyBackground(
+                      "solid",
+                      hexAndOpacityToRgba(solidHex, parseFloat(e.target.value)),
+                      gradientEnd,
+                    );
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#64748b",
+                    width: "35px",
+                    textAlign: "right",
+                  }}
+                >
+                  {Math.round(solidOpacity * 100)}%
+                </span>
+              </div>
             </div>
           )}
           {bgMode === "gradient" && (
@@ -1158,7 +1458,7 @@ export default function EditorInspector({
               >
                 <input
                   type="color"
-                  value={gradientStart}
+                  value={parseColorToHexAndOpacity(gradientStart).hex}
                   onChange={(e) =>
                     applyBackground("gradient", e.target.value, gradientEnd)
                   }
@@ -1178,7 +1478,7 @@ export default function EditorInspector({
               >
                 <input
                   type="color"
-                  value={gradientEnd}
+                  value={parseColorToHexAndOpacity(gradientEnd).hex}
                   onChange={(e) =>
                     applyBackground("gradient", gradientStart, e.target.value)
                   }
