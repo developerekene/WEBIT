@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
-import type { ElementSchema } from "../engine/TemplateRenderer";
+import {
+  TemplateRenderer,
+  type ElementSchema,
+} from "../engine/TemplateRenderer";
 
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditorSidebar from "../components/editor/EditorSidebar";
@@ -28,6 +30,9 @@ export default function EditorPage() {
   const [isDraggingOver, setIsDraggingOver] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [modalType, setModalType] = useState<string | null>(null);
+
+  // --- NEW PREVIEW STATE ---
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -185,17 +190,14 @@ export default function EditorPage() {
           : undefined,
     };
 
-    const targetPageId = activePageId || pages[0]?.id;
-
     setPages((prev) =>
       prev.map((p) =>
-        p.id === targetPageId
+        p.id === activePageId
           ? { ...p, elements: [...p.elements, newElement] }
           : p,
       ),
     );
     setSelectedIds([newElement.id]);
-    if (!activePageId) setActivePageId(targetPageId);
 
     setTimeout(() => {
       canvasRef.current?.scrollTo({
@@ -206,17 +208,14 @@ export default function EditorPage() {
   };
 
   const handleAddTemplate = (template: ElementSchema) => {
-    const targetPageId = activePageId || pages[0]?.id;
-
     setPages((prev) =>
       prev.map((p) =>
-        p.id === targetPageId
+        p.id === activePageId
           ? { ...p, elements: [...p.elements, template] }
           : p,
       ),
     );
     setSelectedIds([template.id]);
-    if (!activePageId) setActivePageId(targetPageId);
     setModalType(null);
 
     setTimeout(() => {
@@ -409,7 +408,7 @@ export default function EditorPage() {
         return elements.map((el) => {
           if (el.id === targetId && el.type === "text") {
             return {
-              id: el.id,
+              id: el.id, // keep the same ID so selection highlights remain
               type: "container",
               dropdownMode: "hover",
               styles: {
@@ -587,22 +586,74 @@ export default function EditorPage() {
     );
   }
 
-  return (
-    <>
+  // --- NEW PREVIEW MODE RENDER ---
+  if (isPreviewMode) {
+    const activePage = pages.find((p) => p.id === activePageId);
+    return (
       <div
-        className={styles.editorLayout}
-        onClick={(e) => {
-          setSelectedIds([]);
-          // Only clear the active canvas border if the click was outside the white canvas frame
-          if (
-            e.target instanceof Element &&
-            !e.target.closest(`.${styles.canvasFrame}`)
-          ) {
-            setActivePageId("");
-          }
+        style={{
+          width: "100vw",
+          height: "100vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+          backgroundColor: "#ffffff",
+          position: "relative",
         }}
       >
-        <EditorTopBar viewMode={viewMode} setViewMode={setViewMode} />
+        <div
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            zIndex: 99999,
+          }}
+        >
+          <button
+            onClick={() => setIsPreviewMode(false)}
+            style={{
+              padding: "12px 24px",
+              backgroundColor: "#0f172a",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "50px",
+              fontSize: "1rem",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
+              transition: "transform 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.transform = "scale(1.05)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            ✎ Back to Editor
+          </button>
+        </div>
+
+        {/* Render the components just like a live site! No selectedIds passed means no blue borders */}
+        <TemplateRenderer
+          schema={activePage?.elements || []}
+          selectedIds={[]}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className={styles.editorLayout} onClick={() => setSelectedIds([])}>
+        <EditorTopBar
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          onPreview={() => {
+            setSelectedIds([]);
+            setIsPreviewMode(true);
+          }}
+        />
         <EditorSidebar
           onAddElement={handleAddSidebarElement}
           onOpenModal={setModalType}
@@ -735,36 +786,16 @@ export default function EditorPage() {
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    {/* Placeholder for Preview Image */}
-                    <div
+                    <img
+                      src={template.image}
+                      alt={template.name}
                       style={{
                         height: "120px",
-                        backgroundColor: "#f8fafc",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#94a3b8",
-                        fontSize: "0.85rem",
+                        width: "100%",
+                        objectFit: "contain",
                         borderBottom: "1px solid #e2e8f0",
                       }}
-                    >
-                      {(template as any).image ? (
-                        <img
-                          src={(template as any).image}
-                          alt={template.name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain",
-                          }}
-                        />
-                      ) : (
-                        <span>
-                          [ {modalType === "navbar" ? "Navbar" : "Hero"} Preview
-                          Image ]
-                        </span>
-                      )}
-                    </div>
+                    />
                     <div
                       style={{
                         padding: "1rem",
