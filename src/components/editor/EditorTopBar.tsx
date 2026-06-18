@@ -6,11 +6,13 @@ type ViewMode = "desktop" | "tablet" | "mobile";
 interface EditorTopBarProps {
   viewMode: ViewMode;
   setViewMode: (m: ViewMode) => void;
+  onPreview: () => void;
 }
 
 export default function EditorTopBar({
   viewMode,
   setViewMode,
+  onPreview,
 }: EditorTopBarProps) {
   return (
     <header className={styles.topBar}>
@@ -38,6 +40,9 @@ export default function EditorTopBar({
         </button>
       </div>
       <div className={styles.actions}>
+        <button className={styles.btnSecondary} onClick={onPreview}>
+          ▶ Preview
+        </button>
         <button className={styles.btnSecondary}>{"< / >"} Export JSON</button>
         <button className={styles.btnPrimary}>Publish</button>
       </div>

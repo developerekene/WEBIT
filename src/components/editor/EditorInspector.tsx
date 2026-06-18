@@ -92,6 +92,7 @@ interface ExtendedElement extends ElementSchema {
 
 interface EditorInspectorProps {
   selectedElement: ElementSchema | null;
+  parentElement: ElementSchema | null;
   selectedIdsCount: number;
   onUpdateStyle: (id: string, property: string, value: string) => void;
   onUpdateProp: (id: string, property: string, value: unknown) => void;
@@ -99,10 +100,12 @@ interface EditorInspectorProps {
   onAddNavbarLink: () => void;
   onAddNavbarDropdown: () => void;
   onTurnIntoDropdown: () => void;
+  onRemoveDropdown: (dropdownContainerId: string, triggerId: string) => void;
 }
 
 export default function EditorInspector({
   selectedElement,
+  parentElement,
   selectedIdsCount,
   onUpdateStyle,
   onUpdateProp,
@@ -110,6 +113,7 @@ export default function EditorInspector({
   onAddNavbarLink,
   onAddNavbarDropdown,
   onTurnIntoDropdown,
+  onRemoveDropdown,
 }: EditorInspectorProps) {
   const [customCSS, setCustomCSS] = useState("");
   const [prevId, setPrevId] = useState<string | undefined>(selectedElement?.id);
@@ -402,6 +406,25 @@ export default function EditorInspector({
               }}
             >
               Turn into Dropdown ▾
+            </button>
+          )}
+
+        {parentElement?.dropdownMode !== undefined &&
+          selectedElement.id.includes("trigger") && (
+            <button
+              onClick={() =>
+                onRemoveDropdown(parentElement.id, selectedElement.id)
+              }
+              className={styles.btnSecondary}
+              style={{
+                width: "100%",
+                background: "#fee2e2",
+                color: "#ef4444",
+                borderColor: "#f87171",
+                marginTop: "0.5rem",
+              }}
+            >
+              Remove Dropdown
             </button>
           )}
       </div>
