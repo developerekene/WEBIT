@@ -97,6 +97,7 @@ interface EditorInspectorProps {
   onUpdateStyle: (id: string, property: string, value: string) => void;
   onUpdateProp: (id: string, property: string, value: unknown) => void;
   onDeleteSelected: () => void;
+  onDuplicateSelected: () => void;
   onAddNavbarLink: () => void;
   onAddNavbarDropdown: () => void;
   onTurnIntoDropdown: () => void;
@@ -110,6 +111,7 @@ export default function EditorInspector({
   onUpdateStyle,
   onUpdateProp,
   onDeleteSelected,
+  onDuplicateSelected,
   onAddNavbarLink,
   onAddNavbarDropdown,
   onTurnIntoDropdown,
@@ -344,6 +346,18 @@ export default function EditorInspector({
       <div className={styles.settingsGroup}>
         <h4>Editing: {selectedElement.type.toUpperCase()}</h4>
         <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
+          <button
+            onClick={onDuplicateSelected}
+            className={styles.btnSecondary}
+            style={{
+              flex: 1,
+              background: "#f1f5f9",
+              color: "#0f172a",
+              borderColor: "#cbd5e1",
+            }}
+          >
+            Duplicate
+          </button>
           <button
             onClick={onDeleteSelected}
             className={styles.btnSecondary}

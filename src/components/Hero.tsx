@@ -18,11 +18,14 @@ export default function Hero() {
 
         <div className={styles.buttonGroup}>
           <Link to="/editor">
-            <button className={styles.primaryBtn}>Open the Editor</button>
+            <button className={styles.primaryBtn}>Start Building</button>
+          </Link>
+          {/* <Link to="/templates">
+            <button className={styles.secondaryBtn}>View Templates</button>
           </Link>
           <Link to="/templates">
             <button className={styles.secondaryBtn}>View Templates</button>
-          </Link>
+          </Link> */}
         </div>
       </div>
 
