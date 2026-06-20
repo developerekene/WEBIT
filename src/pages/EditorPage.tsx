@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/purity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "../styles/EditorPage.module.css";
@@ -30,9 +32,10 @@ export default function EditorPage() {
   const [isDraggingOver, setIsDraggingOver] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [modalType, setModalType] = useState<string | null>(null);
-
-  // --- NEW PREVIEW STATE ---
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const [past, setPast] = useState<PageSchema[][]>([]);
+  const [future, setFuture] = useState<PageSchema[][]>([]);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +43,43 @@ export default function EditorPage() {
     const timer = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
+
+  const updatePages = (updater: (prev: PageSchema[]) => PageSchema[]) => {
+    setPages((prev) => {
+      const next = updater(prev);
+      setPast((p) => [...p, prev]);
+      setFuture([]);
+      return next;
+    });
+  };
+
+  const handleUndo = () => {
+    if (past.length === 0) return;
+    const previous = past[past.length - 1];
+    const newPast = past.slice(0, -1);
+    setPast(newPast);
+    setFuture((f) => [pages, ...f]);
+    setPages(previous);
+    setSelectedIds([]);
+  };
+
+  const handleRedo = () => {
+    if (future.length === 0) return;
+    const next = future[0];
+    const newFuture = future.slice(1);
+    setFuture(newFuture);
+    setPast((p) => [...p, pages]);
+    setPages(next);
+    setSelectedIds([]);
+  };
+
+  const deepCloneWithNewIds = (el: ElementSchema): ElementSchema => {
+    return {
+      ...el,
+      id: `${el.type}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      children: el.children ? el.children.map(deepCloneWithNewIds) : undefined,
+    };
+  };
 
   const findElementAndParent = (
     pagesList: PageSchema[],
@@ -76,7 +116,7 @@ export default function EditorPage() {
       : { element: null, parent: null };
 
   const updateElementStyle = (id: string, property: string, value: string) => {
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
           if (el.id === id)
@@ -93,7 +133,7 @@ export default function EditorPage() {
   };
 
   const updateElementProp = (id: string, property: string, value: unknown) => {
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
           if (el.id === id)
@@ -131,7 +171,11 @@ export default function EditorPage() {
     const targetIdx = elements.findIndex((el) => el.id === targetId);
     if (targetIdx !== -1) {
       const targetEl = elements[targetIdx];
-      if (targetEl.type === "section" || targetEl.type === "container") {
+      if (
+        targetEl.type === "section" ||
+        targetEl.type === "container" ||
+        targetEl.type === "carousel"
+      ) {
         return elements.map((el, i) =>
           i === targetIdx
             ? { ...el, children: [...(el.children || []), elToAdd] }
@@ -152,7 +196,7 @@ export default function EditorPage() {
 
   const handleAddPage = () => {
     const newPageId = `page-${Date.now()}`;
-    setPages((prev) => [
+    updatePages((prev) => [
       ...prev,
       { id: newPageId, name: "New Page", elements: [] },
     ]);
@@ -160,7 +204,7 @@ export default function EditorPage() {
   };
 
   const handleUpdatePageName = (id: string, name: string) => {
-    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+    updatePages((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
   };
 
   const handleAddSidebarElement = (elementType: ElementSchema["type"]) => {
@@ -190,7 +234,7 @@ export default function EditorPage() {
           : undefined,
     };
 
-    setPages((prev) =>
+    updatePages((prev) =>
       prev.map((p) =>
         p.id === activePageId
           ? { ...p, elements: [...p.elements, newElement] }
@@ -208,7 +252,7 @@ export default function EditorPage() {
   };
 
   const handleAddTemplate = (template: ElementSchema) => {
-    setPages((prev) =>
+    updatePages((prev) =>
       prev.map((p) =>
         p.id === activePageId
           ? { ...p, elements: [...p.elements, template] }
@@ -224,6 +268,36 @@ export default function EditorPage() {
         behavior: "smooth",
       });
     }, 50);
+  };
+
+  const handleDuplicateSelected = () => {
+    if (selectedIds.length !== 1) return;
+    const targetId = selectedIds[0];
+    const { element } = findElementAndParent(pages, targetId);
+    if (!element) return;
+
+    const cloned = deepCloneWithNewIds(element);
+
+    updatePages((prev) => {
+      const duplicateRec = (elements: ElementSchema[]): ElementSchema[] => {
+        const result: ElementSchema[] = [];
+        for (const el of elements) {
+          result.push({
+            ...el,
+            children: el.children ? duplicateRec(el.children) : undefined,
+          });
+          if (el.id === targetId) {
+            result.push(cloned);
+          }
+        }
+        return result;
+      };
+      return prev.map((page) => ({
+        ...page,
+        elements: duplicateRec(page.elements),
+      }));
+    });
+    setSelectedIds([cloned.id]);
   };
 
   const handleDeleteSelected = () => {
@@ -250,7 +324,7 @@ export default function EditorPage() {
     };
     pages.forEach((page) => checkAndAddDropdownParent(page.elements, null));
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const delRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements
           .filter((el) => !idsToDelete.has(el.id))
@@ -279,7 +353,7 @@ export default function EditorPage() {
       },
     };
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
           if (el.id === targetId && el.type === "container") {
@@ -376,7 +450,7 @@ export default function EditorPage() {
       ],
     };
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
           if (el.id === targetId && el.type === "container") {
@@ -403,12 +477,12 @@ export default function EditorPage() {
     if (selectedIds.length !== 1) return;
     const targetId = selectedIds[0];
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         return elements.map((el) => {
           if (el.id === targetId && el.type === "text") {
             return {
-              id: el.id, // keep the same ID so selection highlights remain
+              id: el.id,
               type: "container",
               dropdownMode: "hover",
               styles: {
@@ -489,7 +563,7 @@ export default function EditorPage() {
     dropdownContainerId: string,
     triggerId: string,
   ) => {
-    setPages((prev) => {
+    updatePages((prev) => {
       const updateRec = (elements: ElementSchema[]): ElementSchema[] => {
         const result: ElementSchema[] = [];
         for (const el of elements) {
@@ -543,7 +617,7 @@ export default function EditorPage() {
     const elToMove = findElementAndParent(pages, existingId).element;
     if (!elToMove) return;
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const cleanedPages = prev.map((p) => ({
         ...p,
         elements: removeElementRecursive(p.elements, existingId),
@@ -563,7 +637,7 @@ export default function EditorPage() {
     const elementToAdd = findElementAndParent(pages, existingId).element;
     if (!elementToAdd) return;
 
-    setPages((prev) => {
+    updatePages((prev) => {
       const cleanedPages = prev.map((p) => ({
         ...p,
         elements: removeElementRecursive(p.elements, existingId),
@@ -586,7 +660,6 @@ export default function EditorPage() {
     );
   }
 
-  // --- NEW PREVIEW MODE RENDER ---
   if (isPreviewMode) {
     const activePage = pages.find((p) => p.id === activePageId);
     return (
@@ -634,7 +707,6 @@ export default function EditorPage() {
           </button>
         </div>
 
-        {/* Render the components just like a live site! No selectedIds passed means no blue borders */}
         <TemplateRenderer
           schema={activePage?.elements || []}
           selectedIds={[]}
@@ -653,6 +725,10 @@ export default function EditorPage() {
             setSelectedIds([]);
             setIsPreviewMode(true);
           }}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={past.length > 0}
+          canRedo={future.length > 0}
         />
         <EditorSidebar
           onAddElement={handleAddSidebarElement}
@@ -686,6 +762,7 @@ export default function EditorPage() {
           onUpdateStyle={updateElementStyle}
           onUpdateProp={updateElementProp}
           onDeleteSelected={handleDeleteSelected}
+          onDuplicateSelected={handleDuplicateSelected}
           onAddNavbarLink={handleAddNavbarLink}
           onAddNavbarDropdown={handleAddNavbarDropdown}
           onTurnIntoDropdown={handleTurnIntoDropdown}
@@ -761,7 +838,7 @@ export default function EditorPage() {
               }}
             >
               {(modalType === "navbar" ? NAVBAR_TEMPLATES : HERO_TEMPLATES).map(
-                (template) => (
+                (template: any) => (
                   <div
                     key={template.id}
                     onClick={() =>
@@ -786,16 +863,35 @@ export default function EditorPage() {
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <img
-                      src={template.image}
-                      alt={template.name}
-                      style={{
-                        height: "120px",
-                        width: "100%",
-                        objectFit: "contain",
-                        borderBottom: "1px solid #e2e8f0",
-                      }}
-                    />
+                    {template.image ? (
+                      <img
+                        src={template.image}
+                        alt={template.name}
+                        style={{
+                          width: "100%",
+                          height: "120px",
+                          objectFit: "contain",
+                          objectPosition: "top center",
+                          borderBottom: "1px solid #e2e8f0",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          height: "120px",
+                          backgroundColor: "#f8fafc",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#94a3b8",
+                          fontSize: "0.85rem",
+                          borderBottom: "1px solid #e2e8f0",
+                        }}
+                      >
+                        [ {modalType === "navbar" ? "Navbar" : "Hero"} Preview
+                        Image ]
+                      </div>
+                    )}
                     <div
                       style={{
                         padding: "1rem",
